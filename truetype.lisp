@@ -18,39 +18,39 @@
   (x1 f32) (y1 f32) (s1 f32) (t1 f32))
 
 
-(load-symbol+ libtt tt:bake-font-bitmap stbtt_BakeFontBitmap
-	      (fcn i32 (data (ptr char)) (offset i32) (pixel_height f32)
-		   (pixels (ptr char)) (pw i32) (ph i32)
+(load-symbol+ libtt tt:bake-font-bitmap stbtt_BakeFontBitmap 
+	      (fcn i32 (data (ptr char)) (offset i32) (pixel_height f32) 
+		   (pixels (ptr char)) (pw i32) (ph i32) 
 		   (first-char i32) (num-chars i32) (chardata (ptr tt:baked-char))))
 
 
 ;stbtt_GetBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int char_index, float *xpos, float *ypos, stbtt_aligned_quad *q, int opengl_fillrule)
 
-(load-symbol+ libtt tt:get-baked-quad stbtt_GetBakedQuad
-	      (fcn void (chardata (ptr tt:baked-char)) (pw i32) (ph i32)
-		   (char_index i32) (xpos (ptr f32)) (ypos (ptr f32))
+(load-symbol+ libtt tt:get-baked-quad stbtt_GetBakedQuad 
+	      (fcn void (chardata (ptr tt:baked-char)) (pw i32) (ph i32) 
+		   (char_index i32) (xpos (ptr f32)) (ypos (ptr f32)) 
 		   (q (ptr tt:aligned-quad)) (opengl-fillrule i32)))
 
 (type (alias (opaque-struct tt:_fontinfo) tt:fontinfo))
 
-(load-symbol+ libtt tt:init-font stbtt_InitFont
-	      (fcn i32 (info (ptr tt:fontinfo)) (data (ptr char)) (offset i32)))
-(load-symbol+ libtt tt:get-font-offset-for-index stbtt_GetFontOffsetForIndex
+(load-symbol+ libtt tt:init-font stbtt_InitFont 
+	      (fcn i32 (info (ptr tt:fontinfo)) (data (ptr char)) (offset i32))) 
+(load-symbol+ libtt tt:get-font-offset-for-index stbtt_GetFontOffsetForIndex 
 	      (fcn i32 (data (ptr char)) (offset i32)))
-(load-symbol+ libtt tt:get-codepoint-bitmap stbtt_GetCodepointBitmap
-	      (fcn (ptr char) (info (ptr tt:fontinfo)) (scale-x f32)
-		   (scale-y f32) (codepoint i32) (width (ptr i32))
-		   (height (ptr i32)) (xoff (ptr i32)) (yoff (ptr i32))))
+(load-symbol+ libtt tt:get-codepoint-bitmap stbtt_GetCodepointBitmap 
+	      (fcn (ptr char) (info (ptr tt:fontinfo)) (scale-x f32) 
+		   (scale-y f32) (codepoint i32) (width (ptr i32)) 
+		   (height (ptr i32)) (xoff (ptr i32)) (yoff (ptr i32)))) 
 
 ;float stbtt_ScaleForPixelHeight(const stbtt_fontinfo *info, float pixels);
-(load-symbol+ libtt tt:scale-for-pixel-height stbtt_ScaleForPixelHeight
+(load-symbol+ libtt tt:scale-for-pixel-height stbtt_ScaleForPixelHeight 
 	      (fcn f32 (info (ptr tt:fontinfo)) (pixels f32)))
 ;void stbtt_GetFontVMetrics(const stbtt_fontinfo *info, int *ascent, int *descent, int *lineGap);
 (load-symbol+ libtt tt:get-font-v-metrics stbtt_GetFontVMetrics
-	      (fcn void (info (ptr tt:fontinfo)) (ascent (ptr i32))
+	      (fcn void (info (ptr tt:fontinfo)) (ascent (ptr i32)) 
 		   (descend (ptr i32)) (line-gap (ptr i32))))
 ;void stbtt_GetCodepointHMetrics(const stbtt_fontinfo *info, int codepoint, int *advanceWidth, int *leftSideBearing);
-(load-symbol+ libtt tt:get-codepoint-h-metrics stbtt_GetCodepointHMetrics
+(load-symbol+ libtt tt:get-codepoint-h-metrics stbtt_GetCodepointHMetrics 
 	      (fcn void (info (ptr tt:fontinfo)) (codepoint i32)
 		   (advance-width (ptr i32)) (left-side-bearing (ptr i32))))
 
@@ -58,15 +58,15 @@
 ;void stbtt_GetCodepointBitmapBoxSubpixel(const stbtt_fontinfo *font, int codepoint, float scale_x, float scale_y, float shift_x, float shift_y, int *ix0, int *iy0, int *ix1, int *iy1)
 (load-symbol+ libtt tt:get-codepoint-bitmap-box-subpixel stbtt_GetCodepointBitmapBoxSubpixel
 	      (fcn void (info (ptr tt:fontinfo)) (codepoint i32) (scale-x f32) (scale-y f32)
-		   (shift-x f32) (shift-y f32) (ix0 (ptr i32)) (iy0 (ptr i32))
+		   (shift-x f32) (shift-y f32) (ix0 (ptr i32)) (iy0 (ptr i32)) 
 		   (ix1 (ptr i32)) (iy1 (ptr i32))))
 
 ;STBTT_DEF void stbtt_MakeCodepointBitmapSubpixel(const stbtt_fontinfo *info, unsigned char *output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, float shift_x, float shift_y, int codepoint);
 (load-symbol+ libtt tt:make-codepoint-bitmap-subpixel stbtt_MakeCodepointBitmapSubpixel
 	      (fcn void (info (ptr tt:fontinfo)) (output (ptr char)) (out-w i32) (out-h i32)
-		   (out-stride i32) (scale-x f32) (scale-y f32) (shift-x f32)
+		   (out-stride i32) (scale-x f32) (scale-y f32) (shift-x f32) 
 		   (shift-y f32) (codepoint i32)))
-
+			      
 ;stbtt_MakeCodepointBitmapSubpixel
 ;stbtt_GetCodepointKernAdvance
 
@@ -81,7 +81,7 @@
 ;; 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 31
 ;; 11111110 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 36 ;;this probably does not exist.
   (let ((ustr (cast string (ptr u8))))
-    (let ((first (deref ustr))
+    (let ((first (deref ustr)) 
 	  (nchars (the 0 i32)))
       (if! (< first 0b10000000)
 	  (progn
@@ -169,7 +169,7 @@
 (defun tt:iterate (void (text (ptr char))
 		   (font-size i32) (max-width i32) (font (ptr tt:fontinfo))
 		   (callback (fcn void (userdata (ptr void)) (status tt:iterate-data)))
-		   (userdata (ptr void)))
+		   (userdata (ptr void))) 
   (let ((len (cast (strlen text) i64))
 	(ascent :type i32)
 	(status :type tt:iterate-data))
@@ -189,41 +189,41 @@
 		    )
 		  (progn
 		    (setf text (read-utf8-codepoint text (addrof (member status codepoint))))
-		    (tt:get-codepoint-h-metrics font
-						(member status codepoint)
-						(addrof (member status advance))
+		    (tt:get-codepoint-h-metrics font 
+						(member status codepoint) 
+						(addrof (member status advance)) 
 						(addrof lsb))
 		    (tt:get-codepoint-bitmap-box-subpixel font (member status codepoint)
 							  (member status scale)
-							  (member status scale)
-							  (member status x-shift)
-							  0
+							  (member status scale) 
+							  (member status x-shift) 
+							  0 
 							  (addrof (member status x0))
 							  (addrof (member status y0))
 							  (addrof (member status x1))
 							  (addrof (member status y1)))
-
-
-		    (when (>  (cast (+ (member status xpos)
-				       (* (member status scale)
-					  (cast (member status advance) f32)))
+		    
+		    
+		    (when (>  (cast (+ (member status xpos) 
+				       (* (member status scale) 
+					  (cast (member status advance) f32))) 
 				    i32)
 			      max-width)
 		      (setf (member status xpos) 0)
 		      (incr (member status baseline) (cast (* (cast ascent f32) (member status scale)) i32))
 		      (tt:get-codepoint-bitmap-box-subpixel font (member status codepoint)
 							    (member status scale)
-							    (member status scale)
-							    (member status x-shift)
-							    0
+							    (member status scale) 
+							    (member status x-shift) 
+							    0 
 							    (addrof (member status x0))
 							    (addrof (member status y0))
 							    (addrof (member status x1))
 							    (addrof (member status y1)))
-
+		      
 		      )
 		    (callback userdata status)
-		    (setf (member status xpos)
+		    (setf (member status xpos) 
 			  (+ (member status xpos) (* (member status scale) (cast (member status advance) f32))))
 		    ))))))
 
@@ -231,7 +231,7 @@
   (var! ((rect (cast userdata (ptr size)))
 	 ;it seems to buffer needs to be 8-byte size.
 	(right (* (+ 1 (/ (cast ;(ceilf
-			   (+  (cast  (member status x1) f32)
+			   (+  (cast  (member status x1) f32) 
 			       (member status xpos))
 			   i64) 4)) 4))
 	 (bottom (cast (+ (member status y1) (member status baseline)) i64)))
@@ -249,19 +249,19 @@
 (defun rect-draw-callback (void (draw-user-data (ptr void)) (status tt:iterate-data))
   (let ((draw-item (deref (cast draw-user-data (ptr rect-draw-item)))))
     (let ((s (member draw-item s)))
-      (let ((buffer-pt
+      (let ((buffer-pt 
 	     (ptr+ (member draw-item buffer)
 		   (+ (cast (ceilf
-			     (+ (member status xpos)
+			     (+ (member status xpos) 
 				(cast (member status x0) f32))) i64)
-		      (* (cast (+ (member status y0)
+		      (* (cast (+ (member status y0) 
 				  (member status baseline)
-				  ) i64)
+				  ) i64) 
 			 (member s width)))))
 	    (x-shift (- (member status xpos) (floorf (member status xpos)))))
-	(tt:make-codepoint-bitmap-subpixel (member draw-item font)
-					   buffer-pt
-					   (- (member status x1) (member status x0))
+	(tt:make-codepoint-bitmap-subpixel (member draw-item font) 
+					   buffer-pt 
+					   (- (member status x1) (member status x0)) 
 					   (- (member status y1) (member status y0))
 					   (cast (member s width) i32)
 					   (member status scale)
@@ -273,14 +273,14 @@
 (defun get-level-conv(char (code char))
   (let ((code2 (>> (cast (cast code u8) i64) 5))) ;1 2 4 8 16 32 64 128 256
     (deref (ptr+ " .:ioVM@" code2))))
-
+    
 
  (defun test
      (let ((baked (cast (alloc0 100) (ptr tt:fontinfo)))
 	   (fontpath "/usr/share/fonts/truetype/freefont/FreeMono.ttf")
 	   (s (cast 0 u64))
 	   (str "Antialized text
-In Truetype
+In Truetype 
 format:
 
 
@@ -317,7 +317,7 @@ vxyz|'.
 				      (printchar (get-level-conv v))
 				      )))
 			   (printstr newline))
-
+		  
 		  ))))))))
 
 (defun defer-test (void (a (fcn void (userdata (ptr void)))) (userdata (ptr void)))
