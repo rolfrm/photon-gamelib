@@ -18,3 +18,29 @@
     (let (( vbo :type u32))
       (gl:gen-buffers 1 (addrof vbo))
       vbo))
+
+(defstruct gl-mesh 
+  (vbo u32) ; vertex buffer object
+  (ibo u32) ; index buffer object (triangles)
+  (dims i32)
+  (cnt i32)
+  (kind gl:enum)) ; number of indexes
+
+(defun new-gl-mesh (gl-mesh)
+  (let ((out :type gl-mesh))
+    (setf (member out vbo) -1)
+    (setf (member out dims) 0)
+    (setf (member out cnt) 0)
+    out))
+    
+
+(defun load-mesh (gl-mesh (_mesh mesh))
+  (let ((msh (new-gl-mesh))
+	(size (* (member _mesh dims)
+		 (member _mesh cnt)
+		 4)))
+    (gl:gen-buffers 2 (addrof (member msh vbo))) ;vbo and ibo
+    (gl:bind-buffer gl:array-buffer (member msh vbo))
+    (gl:buffer-data gl:array-buffer (cast (member _mesh vertexes) (ptr void)))
+    
+  

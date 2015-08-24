@@ -8,7 +8,7 @@
 (defvar rect-default :type rect)
 
 (memset (cast (addrof rect-default) (ptr void)) 0 (size-of (type rect)))
-;
+(load "mesh.lisp")
 (load "glfw.lisp")
 (glfw:init)
 (defvar win (glfw:create-window 400 400 "Flowery!" null null))
@@ -22,13 +22,7 @@
 (defvar font (load-font "/usr/share/fonts/truetype/freefont/FreeMono.ttf"))
 
 (text-box:load)
-
-
-;(exit 0)
-
-;(exit 0)
-
-
+ 
 (defvar prog (gl:create-program))
 (defvar frag (gl:create-shader gl:fragment-shader))
 (defvar vert (gl:create-shader gl:vertex-shader))
