@@ -1,4 +1,4 @@
-(load "../photon/std2.lisp")
+(load "../Photon/std2.lisp")
 (load "truetype.lisp")
 
 (defstruct rect
@@ -29,20 +29,37 @@
 (overload print print-array-test)
 
 (defmacro array (item &rest args)
-  (progn
-    (assert (> (sub-expr.cnt args) 0))
-    (let ((type (type-of (sub-expr.expr args 0))))
-      (expr 
-       (let ((arr :type array-test))
-	 (setf (member arr data) 
-	       (alloc (unexpr (number2expr (cast (* (sub-expr.cnt args) (size-of type)) i64)))))
+  (let ((argcnt (sub-expr.cnt args)))
+    (assert (> argcnt 0))
+    (let ((type (type-of (sub-expr.expr args 0)))
+	  (expr-buf (cast (alloc0 (* (+ 1 argcnt) (size-of (type (ptr void)))))
+			  (ptr (ptr expr)))))
+      (setf (deref expr-buf) (expr progn))
+      (range it 0 (cast argcnt i64)
+	     (setf (deref (+ expr-buf it 1))
+		   (expr
+		    (setf (deref (+ data (unexpr (number2expr it)))) 
+			  (unexpr (sub-expr.expr args (cast it u64)))))))
+      (let ((endexpr (make-sub-expr expr-buf (cast (+ argcnt 1) u64))))
+	;(print "End expr >> "endexpr newline)
+	(expr 
+	 (let ((arr :type array-test)
+	       (data (cast (alloc (unexpr (number2expr (cast (* (sub-expr.cnt args) (size-of type)) i64))))
+			   (ptr (unexpr (type2expr type))))))
+	   (setf (member arr data) 
+		 (cast data (ptr void)))
 	 (setf (member arr name) (stringify (unexpr  item)))
 	 (setf (member arr cnt) 
 	       (unexpr (number2expr (cast (sub-expr.cnt args) i64))))
 	 (setf (member arr elem-size) (unexpr (number2expr (cast (size-of type) i64))))
-	 arr)))))
-(array :vertexes (vec 0 0) (vec 1 1) (vec 2 2))
+	 (unexpr endexpr)
+	 arr))))))
 
+(vec 0 0)
+(let ((arr (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2) (vec 3 3) (vec 4 4) (vec 5 6))))
+  (range i 0 (member arr cnt)
+	 (print (deref (+ (cast (member arr data) (ptr vec2)) i)) newline)))
+;(exit 0)
 (print (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)) newline)
 
 
