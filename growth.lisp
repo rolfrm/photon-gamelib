@@ -1,4 +1,4 @@
-(load "../Photon/std2.lisp")
+(load "../photon/std2.lisp")
 (load "truetype.lisp")
 
 (defstruct rect
@@ -15,8 +15,35 @@
 (glfw:make-current win)
 (load "gl.lisp")
 (load "gl-ext.lisp")
-
 (load "textbox-shader.lisp")
+
+(defstruct array-test
+  (name (ptr char))
+  (data (ptr void))
+  (cnt i64)
+  (elem-size i64))
+
+(defun print-array-test
+    (void (arr array-test))
+  (print "(array " (member arr name) " " (member arr cnt)  ")"))
+(overload print print-array-test)
+
+(defmacro array (item &rest args)
+  (progn
+    (assert (> (sub-expr.cnt args) 0))
+    (let ((type (type-of (sub-expr.expr args 0))))
+      (expr 
+       (let ((arr :type array-test))
+	 (setf (member arr data) 
+	       (alloc (unexpr (number2expr (cast (* (sub-expr.cnt args) (size-of type)) i64)))))
+	 (setf (member arr name) (stringify (unexpr  item)))
+	 (setf (member arr cnt) 
+	       (unexpr (number2expr (cast (sub-expr.cnt args) i64))))
+	 (setf (member arr elem-size) (unexpr (number2expr (cast (size-of type) i64))))
+	 arr)))))
+(array :vertexes (vec 0 0) (vec 1 1) (vec 2 2))
+
+(print (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)) newline)
 
 
 (defvar font (load-font "/usr/share/fonts/truetype/freefont/FreeMono.ttf"))
