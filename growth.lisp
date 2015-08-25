@@ -56,6 +56,11 @@
 	 arr))))))
 
 (vec 0 0)
+(type
+ (struct (array vec2) 
+	 (data (ptr vec2))
+	 (cnt i64)))
+
 (let ((arr (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2) (vec 3 3) (vec 4 4) (vec 5 6))))
   (range i 0 (member arr cnt)
 	 (print (deref (+ (cast (member arr data) (ptr vec2)) i)) newline)))
