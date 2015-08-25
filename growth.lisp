@@ -41,32 +41,32 @@
 		    (setf (deref (+ data (unexpr (number2expr it)))) 
 			  (unexpr (sub-expr.expr args (cast it u64)))))))
       (let ((endexpr (make-sub-expr expr-buf (cast (+ argcnt 1) u64))))
-	;(print "End expr >> "endexpr newline)
-	(expr 
-	 (let ((arr :type array-test)
-	       (data (cast (alloc (unexpr (number2expr (cast (* (sub-expr.cnt args) (size-of type)) i64))))
-			   (ptr (unexpr (type2expr type))))))
-	   (setf (member arr data) 
-		 (cast data (ptr void)))
-	 (setf (member arr name) (stringify (unexpr  item)))
-	 (setf (member arr cnt) 
-	       (unexpr (number2expr (cast (sub-expr.cnt args) i64))))
-	 (setf (member arr elem-size) (unexpr (number2expr (cast (size-of type) i64))))
-	 (unexpr endexpr)
-	 arr))))))
-
+	(let ((e (expr 
+		  (progn
+		    (defstruct (array (unexpr (type2expr type)))
+		      (data (ptr (unexpr (type2expr type))))
+		      (cnt i64)
+		      (name (ptr char))
+		      )
+		    (let ((arr :type (array (unexpr (type2expr type))))
+			  (data (cast (alloc 
+				       (unexpr 
+					(number2expr 
+					 (cast (* (sub-expr.cnt args) (size-of type)) i64))))
+				      (ptr (unexpr (type2expr type))))))
+		      (setf (member arr data) data)
+		      (setf (member arr name) (stringify (unexpr  item)))
+		      (setf (member arr cnt) (unexpr (number2expr (cast (sub-expr.cnt args) i64))))
+		      (unexpr endexpr)
+		      arr)))))
+	  e)))))
 (vec 0 0)
-(type
- (struct (array vec2) 
-	 (data (ptr vec2))
-	 (cnt i64)))
 
 (let ((arr (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2) (vec 3 3) (vec 4 4) (vec 5 6))))
   (range i 0 (member arr cnt)
 	 (print (deref (+ (cast (member arr data) (ptr vec2)) i)) newline)))
-;(exit 0)
-(print (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)) newline)
 
+(print (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)) newline)
 
 (defvar font (load-font "/usr/share/fonts/truetype/freefont/FreeMono.ttf"))
 
