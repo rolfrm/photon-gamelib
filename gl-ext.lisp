@@ -34,13 +34,22 @@
     out))
     
 
-(defun load-mesh (gl-mesh (_mesh mesh))
-  (let ((msh (new-gl-mesh))
-	(size (* (member _mesh dims)
-		 (member _mesh cnt)
-		 4)))
-    (gl:gen-buffers 2 (addrof (member msh vbo))) ;vbo and ibo
-    (gl:bind-buffer gl:array-buffer (member msh vbo))
-    (gl:buffer-data gl:array-buffer (cast (member _mesh vertexes) (ptr void)))
+;; (defun load-mesh (gl-mesh (_mesh mesh))
+;;   (let ((msh (new-gl-mesh))
+;; 	(size (* (member _mesh dims)
+;; 		 (member _mesh cnt)
+;; 		 4)))
+;;     (gl:gen-buffers 2 (addrof (member msh vbo))) ;vbo and ibo
+;;     (gl:bind-buffer gl:array-buffer (member msh vbo))
+;;     (gl:buffer-data gl:array-buffer (cast (member _mesh vertexes) (ptr void)))))
     
   
+    
+(defun gl-ext:print-shader-errors (void (shader gl:shader))
+  (let ((glstatus (cast 0 u32))
+	(log (cast (alloc0 1000) (ptr char))))
+    (gl:get-shader-info shader gl:compile-status (addrof glstatus))
+    (when (eq glstatus gl:false)
+      (let ((length :type u32))
+	(gl:get-shader-info-log shader 1000 (addrof length) log)
+	(print "**** Shader Info Log ****" newline log newline "********" newline)))))

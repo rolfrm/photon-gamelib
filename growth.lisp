@@ -17,65 +17,6 @@
 (load "gl-ext.lisp")
 (load "textbox-shader.lisp")
 
-(defstruct array-test
-  (name (ptr char))
-  (data (ptr void))
-  (cnt i64)
-  (elem-size i64))
-
-(defmacro array (item &rest args)
-  (let ((argcnt (sub-expr.cnt args)))
-    (assert (> argcnt 0))
-    (let ((type (type-of (sub-expr.expr args 0)))
-	  (expr-buf (cast (alloc0 (* (+ 1 argcnt) (size-of (type (ptr void)))))
-			  (ptr (ptr expr)))))
-      (setf (deref expr-buf) (expr progn))
-      (range it 0 (cast argcnt i64)
-	     (setf (deref (+ expr-buf it 1))
-		   (expr
-		    (setf (deref (+ data (unexpr (number2expr it)))) 
-			  (unexpr (sub-expr.expr args (cast it u64)))))))
-      (let ((endexpr (make-sub-expr expr-buf (cast (+ argcnt 1) u64))))
-	(let ((e (expr 
-		  (progn
-		    (defstruct (array (unexpr (type2expr type)))
-		      (data (ptr (unexpr (type2expr type))))
-		      (cnt i64)
-		      (name (ptr char))
-		      )
-		    (let ((arr :type (array (unexpr (type2expr type))))
-			  (data (cast (alloc 
-				       (unexpr 
-					(number2expr 
-					 (cast (* (sub-expr.cnt args) (size-of type)) i64))))
-				      (ptr (unexpr (type2expr type))))))
-		      (setf (member arr data) data)
-		      (setf (member arr name) (stringify (unexpr  item)))
-		      (setf (member arr cnt) (unexpr (number2expr (cast (sub-expr.cnt args) i64))))
-		      (unexpr endexpr)
-		      arr)))))
-	  e)))))
-(vec 0 0)
-
-(let ((arr (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2) (vec 3 3) (vec 4 4) (vec 5 6))))
-  (range i 0 (member arr cnt)
-	 (print (deref (+ (cast (member arr data) (ptr vec2)) i)) newline)))
-
-(defvar array-a (array :uvs (vec 0 1) (vec 1 2) (vec 2 2)))
-(defvar array-b (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)))
-(defun compare-arrays (bool (a (array vec2)) (b (array vec2)))
-  (let ((cnt-a (member a cnt)))
-    (and (eq cnt-a (member b cnt))
-	 (and
-	  (eq (member a name) (member b name))
-	  (let ((result true))
-	    (range it 0 cnt-a
-		   (setf result (and result (vec2:eq 
-					     (deref (+ (member a data) it))
-					     (deref (+ (member b data) it))))))
-	    result)))))
-(print "EQ?" (compare-arrays array-a array-b) newline)
-;(exit 0)
 (defvar font (load-font "/usr/share/fonts/truetype/freefont/FreeMono.ttf"))
 
 (text-box:load)

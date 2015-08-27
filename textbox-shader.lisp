@@ -50,15 +50,6 @@
 (defvar text-box:shader:bg-color :type gl:uniform-loc)
 (defvar text-box:loaded false)
 
-(defun text-box:print-shader-errors (void (shader gl:shader))
-  (let ((glstatus (cast 0 u32))
-	(log (cast (alloc0 1000) (ptr char))))
-    (gl:get-shader-info shader gl:compile-status (addrof glstatus))
-    (when (eq glstatus gl:false)
-      (let ((length :type u32))
-	(gl:get-shader-info-log shader 1000 (addrof length) log)
-	(print "**** Shader Info Log ****" newline log newline "********" newline)))))
-    
 (defun text-box:load
     (unless text-box:loaded
       (let (
@@ -103,9 +94,9 @@ void main(){
 	(gl:compile-shader vert)
 	
 	(print "**** frag ****" newline)
-	(text-box:print-shader-errors frag)
+	(gl-ext:print-shader-errors frag)
 	(print "**** vert ****" newline)
-	(text-box:print-shader-errors vert)
+	(gl-ext:print-shader-errors vert)
 	
 	(gl:attach-shader text-box:shader frag)
 	(gl:attach-shader text-box:shader vert)
@@ -120,6 +111,7 @@ void main(){
 	      (gl:get-uniform-location text-box:shader "fg_color"))
 	
 	)))
+
       
   
 (defstruct color
