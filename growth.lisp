@@ -23,11 +23,6 @@
   (cnt i64)
   (elem-size i64))
 
-(defun print-array-test
-    (void (arr array-test))
-  (print "(array " (member arr name) " " (member arr cnt)  ")"))
-(overload print print-array-test)
-
 (defmacro array (item &rest args)
   (let ((argcnt (sub-expr.cnt args)))
     (assert (> argcnt 0))
@@ -66,8 +61,21 @@
   (range i 0 (member arr cnt)
 	 (print (deref (+ (cast (member arr data) (ptr vec2)) i)) newline)))
 
-(print (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)) newline)
-
+(defvar array-a (array :uvs (vec 0 1) (vec 1 2) (vec 2 2)))
+(defvar array-b (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)))
+(defun compare-arrays (bool (a (array vec2)) (b (array vec2)))
+  (let ((cnt-a (member a cnt)))
+    (and (eq cnt-a (member b cnt))
+	 (and
+	  (eq (member a name) (member b name))
+	  (let ((result true))
+	    (range it 0 cnt-a
+		   (setf result (and result (vec2:eq 
+					     (deref (+ (member a data) it))
+					     (deref (+ (member b data) it))))))
+	    result)))))
+(print "EQ?" (compare-arrays array-a array-b) newline)
+;(exit 0)
 (defvar font (load-font "/usr/share/fonts/truetype/freefont/FreeMono.ttf"))
 
 (text-box:load)
