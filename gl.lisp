@@ -6,7 +6,7 @@
   (expr (defun! (stringify (unexpr name))
                               (type (unexpr _type))
 
-                              (let ((symb (load-symbol libgl (quote (unexpr cname)))))
+                              (let ((symb (load-symbol libgl (stringify (unexpr cname)))))
                                  (when (eq symb null)
                                      (setf symb (glfw:get-proc-address (stringify (unexpr cname)))))
                                    symb)))))

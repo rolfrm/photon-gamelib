@@ -16,6 +16,29 @@
 (load "gl.lisp")
 (load "gl-ext.lisp")
 
+(defmacro array-type(type)
+  (expr 
+   (progn
+     (defstruct (array (unexpr type))
+       (data (ptr (unexpr type)))
+       (cnt i64)
+       (name (ptr symbol)))
+     (type (array (unexpr type))))))
+
+(print (expand (expr (array-type i32))) newline)
+
+(defmacro map (type array fcn)
+  (let ((s (expr2symbol (expr (map2 (unexpr type))))))
+    (let ((test (get-var s)))
+      (when (eq null test)
+	(eval! (expr (array-type (unexpr type))))
+	(eval! (expr 
+		(defun (map2 (unexpr type)) 
+		    (void (a (array (unexpr type))) (f (ptr (fcn void (v (unexpr type))))))
+		  (range it 0 (member a cnt)
+			 (f (deref (ptr+ (member a data) it)))))))))
+    (expr ((map2 (unexpr type)) (unexpr array) (unexpr fcn)))))
+
 (defmacro array (&type t args)
   (let ((argcnt (sub-expr.cnt args)))
     (assert (> argcnt 1))
@@ -49,7 +72,38 @@
 		      arr)))))
 	  (dealloc (cast expr-buf (ptr void)))
 	  e)))))
-(vec 0 0)
+
+
+;((m1))
+;(map vec2)
+(defvar f1 (lambda (void (v vec2)) (print v newline)))
+;(f1 (vec 1 2))
+(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
+(map vec2 (array :vex (vec 1 2) (vec 3 4)) (lambda (void (v vec2)) (print (+ v (vec 3.1 4.1)) newline)))
+(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
+(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
+(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
+(exit 0)
+
+;(defmacro generic (&type t body)
+;  (let ((name (sub-expr.expr body 0)))
+;  (let ((gen-name (sub-expr.expr name 0)))
+      
+
+;generic function
+(generic (map a) (void (seq (array a)) (f (fcn void (item a))))
+  (range it 0 (member seq cnt)
+	 (f (deref (ptr+ seq it)))))
+
+((map vec2) (array (vec 0 0) (vec 1 1)) (lambda (void (item vec2)) (print item newline)))
+(defun (setf (ptr i32)) (i32 (p (ptr 32)) (value i32))
+   (setf (deref p) value))
+   
+;(defmacro genfun (args body)
+
+(defun fcn1 (void (a (array-type i32)))
+  (print (member a cnt) newline))
+
 
 (let ((arr (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2) (vec 3 3) (vec 4 4) (vec 5 6))))
   (range i 0 (member arr cnt)
@@ -61,7 +115,8 @@
 (defvar simple-array (array :vertexes (cast 1.0 f32) (cast 1.0 f32) (cast 1.0 f32) (cast 1.0 f32)))
 (defvar simple-array2 (array :vertexes 0.0 0.0 1.0 0.0 1.0 1.0 0.0 1.0))
 (defvar simple-array3 (the (array :vertexes 0.0 0.0 1.0 0.0 1.0 1.0 0.0 1.0) (array f64)))
-;(exit 0)
+;(print ">>> " (cast libc i64) " " (cast (load-symbol libc "malloc") i64) newline)
+(exit 0)
 
 (defun compare-arrays (bool (a (array vec2)) (b (array vec2)))
   (let ((cnt-a (member a cnt)))
@@ -81,7 +136,7 @@
     (gl:buffer-data gl:array-buffer (cast (* (member array cnt) 4) u32) (cast (member array data) (ptr void)) gl:static-draw)
     out))
 
-(defun (load (array f64)
+;(defun (load (array f64)
 
 (print "array: " ((load (array f32)) simple-array) newline)
 
