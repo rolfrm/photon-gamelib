@@ -54,11 +54,7 @@
       (let ((endexpr (make-sub-expr expr-buf (cast argcnt u64))))
 	(let ((e (expr 
 		  (progn
-		    (defstruct (array (unexpr (type2expr type)))
-		      (data (ptr (unexpr (type2expr type))))
-		      (cnt i64)
-		      (name (ptr symbol))
-		      )
+		    (array-type (unexpr (sub-expr.expr args 1)))
 		    (let ((arr :type (array (unexpr (type2expr type))))
 			  (data (cast (alloc 
 				       (unexpr 
@@ -83,6 +79,7 @@
 (map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
 (map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
 (map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
+(map vec3 (array :vex2 (vec 1 2 3) (vec 1 2 3)) (lambda (void (v vec3)) (print v newline)))
 (exit 0)
 
 ;(defmacro generic (&type t body)
