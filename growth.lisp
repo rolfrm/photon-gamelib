@@ -78,6 +78,8 @@ length
 (gl:attach-shader prog vert)
 (gl:bind-attrib-location prog 0 "vertex_position")
 (gl:link-program prog)
+(gl:delete-shader frag)
+(gl:delete-shader vert)
 (gl:get-program-info prog gl:link-status (addrof glstatus))
 (print "Shader status: " glstatus newline)
 (gl:use-program prog)
@@ -362,11 +364,9 @@ length
 
 
 	    (setf height (member cheight y))
-	    ;(print "height: " height newline)
 	    )
 	  ))
 	)
-
       ;(setf speed (* 0.9995 speed))
       (gl:uniform dir-loc (vec 1 0))
       (gl:clear gl:color-buffer-bit)
