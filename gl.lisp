@@ -28,6 +28,7 @@
 (type (alias u32 gl:shader))
 (type (alias u32 gl:uniform-loc))
 (gl-load gl:create-shader glCreateShader  (fcn gl:shader (type gl:enum)))
+(gl-load gl:delete-shader glDeleteShader (fcn void (shader gl:shader)))
 (gl-load gl:shader-source glShaderSource
 	      (fcn void
 		   (shader gl:shader)
@@ -35,6 +36,7 @@
 		   (shader-string (ptr (ptr char)))
 		   (length (ptr u32))))
 (gl-load gl:create-program glCreateProgram (fcn gl:shader-program))
+(gl-load gl:delete-program glDeleteProgram (fcn void (prog gl:shader-program)))
 (gl-load gl:compile-shader glCompileShader (fcn void (shader gl:shader)))
 (gl-load gl:get-shader-info-log glGetShaderInfoLog
 	      (fcn void (shader gl:shader) (maxlength u32) (length (ptr u32)) (buffer (ptr char))))
@@ -51,6 +53,7 @@
 
 ;; gl vbo
 (gl-load gl:gen-buffers glGenBuffers (fcn void (count u32) (buffer-ptr (ptr u32))))
+(gl-load gl:delete-buffers glDeleteBuffers (fcn void (count u32) (buffer-ptr (ptr u32))))
 (gl-load gl:bind-buffer glBindBuffer (fcn void (type gl:enum) (buffer u32)))
 (gl-load gl:buffer-data glBufferData
 	 (fcn void (type gl:enum) (byte-size u32) (data (ptr void)) (mode gl:enum)))
