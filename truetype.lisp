@@ -124,7 +124,7 @@
 	     (setf (deref out-pt) out)))
       (+ string (cast (+ nchars 1) i64)))))
 
-(defun test-codepoint
+(defun test-codepoint (void)
   (let ((str "ǂ") (codepoint :type i32))
     (read-utf8-codepoint str (addrof codepoint))
     (print-hex (cast codepoint i64))
@@ -275,7 +275,7 @@
     (deref (ptr+ " .:ioVM@" code2))))
     
 
- (defun test
+ (defun test (void)
      (let ((baked (cast (alloc0 100) (ptr tt:fontinfo)))
 	   (fontpath "/usr/share/fonts/truetype/freefont/FreeMono.ttf")
 	   (s (cast 0 u64))

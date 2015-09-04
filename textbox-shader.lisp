@@ -50,7 +50,7 @@
 (defvar text-box:shader:bg-color :type gl:uniform-loc)
 (defvar text-box:loaded false)
 
-(defun text-box:load
+(defun text-box:load (void)
     (unless text-box:loaded
       (let (
 	    (frag (gl:create-shader gl:fragment-shader))

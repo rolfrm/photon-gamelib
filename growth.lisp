@@ -149,7 +149,7 @@ length
     (setf (member r size) size)
     r))
 
-(defun load-boxes
+(defun load-boxes (void)
   (let ((size (* (cast grass-rect-cnt u64) (size-of (type f32)) 4 2)))
     (let ((buf (cast (alloc size) (ptr f32))))
     ; n rects x 4 vertices x 2 dimensions
@@ -237,7 +237,7 @@ length
 	    (+ amount dead-zone)
 	    0.0))))
 
-(defun load-game
+(defun load-game (void)
   (progn
     (setf player-dir (vec 0 1))
     (setf boosters-eaten 0)
@@ -286,7 +286,7 @@ length
 
 (glfw:set-window-close-callback win close-callback)
 
-(defun run-game
+(defun run-game (void)
 (let ((iteration 0)
       (height (cast 0.0 f64))
       (alive true)
