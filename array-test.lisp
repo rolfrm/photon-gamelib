@@ -16,34 +16,57 @@
 (load "gl.lisp")
 (load "gl-ext.lisp")
 
+(defmacro rect-test ()
+  (expr (member rect-default upper-left)))
+(macrolet ((s3 (member rect-default size)))
+  (print s3 newline))
+(print rect-test newline)
+
+
 (defmacro array-type(type)
-  (expr 
-   (progn
-     (defstruct (array (unexpr type))
-       (data (ptr (unexpr type)))
-       (cnt i64)
-       (name (ptr symbol)))
-     (type (array (unexpr type))))))
+  (progn
+    (eval! (expr
+	    (progn
+	      (print "Define!! " newline)
+	      (defstruct (array (unexpr type))
+		(data (ptr (unexpr type)))
+		(cnt i64)
+		(name (ptr expr))))))
+    (print "This happens.." newline)
+    (expr (array (unexpr type)))))
 
+;(array-type i32)
 (print (expand (expr (array-type i32))) newline)
+(print (expand (expr (array-type i64))) newline)
 
-(defmacro map (type array fcn)
-  (let ((s (expr2symbol (expr (map2 (unexpr type))))))
-    (let ((test (get-var s)))
+;(exit 0)
+;(exit 0)
+(defun tst (void (a (array-type i32)))
+  (print (member a cnt)))
+
+(defun struct-name ((ptr expr) (struct-type (ptr type_def)))
+  (alias-name struct-type))
+
+(defmacro map (array fcn)
+  (let ((type :type (ptr expr)))
+    (let ((array-type (type-of array)))
+      (let ((array-name (struct-name array-type)))
+	(setf type (sub-expr.expr array-name 1))))
+    (let ((test (get-var (expr (map2 (unexpr type))))))
       (when (eq null test)
-	(eval! (expr (array-type (unexpr type))))
 	(eval! (expr 
 		(defun (map2 (unexpr type)) 
-		    (void (a (array (unexpr type))) (f (ptr (fcn void (v (unexpr type))))))
+		    (void (a (array-type (unexpr type))) (f (ptr (fcn void (v (unexpr type))))))
 		  (range it 0 (member a cnt)
 			 (f (deref (ptr+ (member a data) it)))))))))
     (expr ((map2 (unexpr type)) (unexpr array) (unexpr fcn)))))
 
-(defmacro array (&type t args)
+(defvar array:current-name :type (ptr expr))
+(defmacro make-array (&type t args)
   (let ((argcnt (sub-expr.cnt args)))
     (assert (> argcnt 1))
     (let ((type (type-of (sub-expr.expr args 1)))
-	  (expr-buf (cast (alloc0 (* argcnt (size-of (type (ptr void)))))
+	  (expr-buf (cast (alloc0 (* argcnt (size-of (type (ptr expr)))))
 			  (ptr (ptr expr)))))
       (setf (deref expr-buf) (expr progn))
       (range it 1 (cast argcnt i64)
@@ -52,24 +75,26 @@
 		    (setf (deref (+ data (unexpr (number2expr (- it 1)))))
 			  (unexpr (sub-expr.expr args (cast it u64)))))))
       (let ((endexpr (make-sub-expr expr-buf (cast argcnt u64))))
+	(setf array:current-name (sub-expr.expr args 0))
 	(let ((e (expr 
-		  (progn
-		    (array-type (unexpr (sub-expr.expr args 1)))
-		    (let ((arr :type (array (unexpr (type2expr type))))
+		  (progn		    
+		    (let ((arr :type (array-type (unexpr (type2expr type))))
 			  (data (cast (alloc 
 				       (unexpr 
 					(number2expr 
 					 (cast (* (sub-expr.cnt args) (size-of type)) i64))))
 				      (ptr (unexpr (type2expr type))))))
+
 		      (setf (member arr data) data)
-		      (setf (member arr name) (quote (unexpr (sub-expr.expr args 0))))
+		      (setf (member arr name) array:current-name)
 		      (setf (member arr cnt) (unexpr (number2expr (cast (- argcnt 1) i64))))
 		      (unexpr endexpr)
 		      arr)))))
 	  (dealloc (cast expr-buf (ptr void)))
 	  e)))))
 
-
+(map (make-array :a1 1 2 3 4 5 6 7 8 9) (lambda (void (a i64)) (print a newline)))
+(exit 0)
 ;((m1))
 ;(map vec2)
 (defvar f1 (lambda (void (v vec2)) (print v newline)))
