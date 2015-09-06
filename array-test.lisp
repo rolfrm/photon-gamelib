@@ -25,14 +25,10 @@
 
 (defmacro array-type(type)
   (progn
-    (eval! (expr
-	    (progn
-	      (print "Define!! " newline)
-	      (defstruct (array (unexpr type))
-		(data (ptr (unexpr type)))
-		(cnt i64)
-		(name (ptr expr))))))
-    (print "This happens.." newline)
+    (eval! (expr (defstruct (array (unexpr type))
+		   (data (ptr (unexpr type)))
+		   (cnt i64)
+		   (name (ptr expr)))))
     (expr (array (unexpr type)))))
 
 ;(array-type i32)
@@ -103,17 +99,16 @@
 (defvar a2 (make-array :a1 (the 1 i32) 2 3))
 (setf a2 (make-array :a1 1 2 3 4 5 6 7))
 (map a2 (lambda (void (a i32)) (print a newline)))
-(exit 0)
 ;((m1))
 ;(map vec2)
 (defvar f1 (lambda (void (v vec2)) (print v newline)))
 ;(f1 (vec 1 2))
-(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
-(map vec2 (array :vex (vec 1 2) (vec 3 4)) (lambda (void (v vec2)) (print (+ v (vec 3.1 4.1)) newline)))
-(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
-(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
-(map vec2 (array :vex (vec 1 2) (vec 3 4)) f1)
-(map vec3 (array :vex2 (vec 1 2 3) (vec 1 2 3)) (lambda (void (v vec3)) (print v newline)))
+(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
+(map (make-array :vex (vec 1 2) (vec 3 4)) (lambda (void (v vec2)) (print (+ v (vec 3.1 4.1)) newline)))
+(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
+(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
+(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
+(map (make-array :vex2 (vec 1 2 3) (vec 1 2 3)) (lambda (void (v vec3)) (print v newline)))
 (exit 0)
 
 ;(defmacro generic (&type t body)
