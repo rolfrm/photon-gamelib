@@ -37,7 +37,7 @@
 
 ;(array-type i32)
 (print (expand (expr (array-type i32))) newline)
-(print (expand (expr (array-type i64))) newline)
+;(print (expand (expr (array-type i64))) newline)
 
 ;(exit 0)
 ;(exit 0)
@@ -61,11 +61,17 @@
 			 (f (deref (ptr+ (member a data) it)))))))))
     (expr ((map2 (unexpr type)) (unexpr array) (unexpr fcn)))))
 
+
+(print (expr2type (expr i32)) newline)
+
 (defvar array:current-name :type (ptr expr))
 (defmacro make-array (&type t args)
   (let ((argcnt (sub-expr.cnt args)))
     (assert (> argcnt 1))
-    (let ((type (type-of (sub-expr.expr args 1)))
+    (unless (eq null (cast t (ptr void))) 
+      (setf t (expr2type  (sub-expr.expr (alias-name t) 1)))
+      )
+    (let ((type (type-of2 t (sub-expr.expr args 1)))
 	  (expr-buf (cast (alloc0 (* argcnt (size-of (type (ptr expr)))))
 			  (ptr (ptr expr)))))
       (setf (deref expr-buf) (expr progn))
@@ -93,7 +99,10 @@
 	  (dealloc (cast expr-buf (ptr void)))
 	  e)))))
 
-(map (make-array :a1 1 2 3 4 5 6 7 8 9) (lambda (void (a i64)) (print a newline)))
+(map (make-array :a1 (vec 1 2) (vec 3 4) (vec 5 6) (vec 7 8)) (lambda (void (a vec2)) (print a newline)))
+(defvar a2 (make-array :a1 (the 1 i32) 2 3))
+(setf a2 (make-array :a1 1 2 3 4 5 6 7))
+(map a2 (lambda (void (a i32)) (print a newline)))
 (exit 0)
 ;((m1))
 ;(map vec2)
