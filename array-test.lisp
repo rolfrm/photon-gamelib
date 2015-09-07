@@ -25,7 +25,7 @@
 (defoverloaded delete)
 (defmacro array-type(type)
   (progn
-    (when (eq null (get-var (expr (delete (unexpr type)))))
+    (when (eq null (get-var (expr (delete array (unexpr type)))))
       
       (eval! (expr (defstruct (array (unexpr type))
 		     (data (ptr (unexpr type)))
@@ -33,7 +33,7 @@
 		     (name (ptr expr)))))
       (eval! (expr (defun (delete array (unexpr type)) (void (arr (array (unexpr type))))
 		     (dealloc (cast (member arr data) (ptr void))))))
-      (eval! (overload delete (delete array (unexpr type))))
+      (eval! (expr (overload delete (delete array (unexpr type)))))
       )
     (expr (array (unexpr type)))))
 
@@ -65,8 +65,7 @@
 
 
 (print (expr2type (expr i32)) newline)
-
-(defvar array:current-name :type (ptr expr))
+(defvar exprtype (type (ptr expr)))
 (defmacro make-array (&type t args)
   (let ((argcnt (sub-expr.cnt args)))
     (assert (> argcnt 1))
@@ -82,24 +81,25 @@
 		   (expr
 		    (setf (deref (+ data (unexpr (number2expr (- it 1)))))
 			  (unexpr (sub-expr.expr args (cast it u64)))))))
-      (let ((endexpr (make-sub-expr expr-buf (cast argcnt u64))))
-	(setf array:current-name (sub-expr.expr args 0))
-	(let ((e (expr 
-		  (progn		    
+      (let ((n (intern (sub-expr.expr args 0))))
+	(let ((endexpr (make-sub-expr expr-buf (cast argcnt u64)))
+	      (s (intern (expr (nameof (unexpr n))))))
+	  (def s exprtype (cast n (ptr void)))
+	  (let ((e (expr 
 		    (let ((arr :type (array-type (unexpr (type2expr type))))
 			  (data (cast (alloc 
 				       (unexpr 
 					(number2expr 
 					 (cast (* (sub-expr.cnt args) (size-of type)) i64))))
 				      (ptr (unexpr (type2expr type))))))
-
+		      
 		      (setf (member arr data) data)
-		      (setf (member arr name) array:current-name)
+		      (setf (member arr name) (unexpr s))
 		      (setf (member arr cnt) (unexpr (number2expr (cast (- argcnt 1) i64))))
 		      (unexpr endexpr)
-		      arr)))))
-	  (dealloc (cast expr-buf (ptr void)))
-	  e)))))
+		      arr))))
+	    (dealloc (cast expr-buf (ptr void)))
+	    e))))))
 
 (map (make-array :a1 (vec 1 2) (vec 3 4) (vec 5 6) (vec 7 8)) (lambda (void (a vec2)) (print a newline)))
 (defvar a2 (make-array :a1 (the 1 i32) 2 3))
