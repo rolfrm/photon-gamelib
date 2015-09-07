@@ -26,20 +26,23 @@
 (defmacro array-type(type)
   (progn
     (when (eq null (get-var (expr (delete array (unexpr type)))))
-      
-      (eval! (expr (defstruct (array (unexpr type))
+      (print "defining data structures for " (expr (array (unexpr type))) newline)
+      (eval!! (intern (expr (defstruct (array (unexpr type))
 		     (data (ptr (unexpr type)))
 		     (cnt i64)
-		     (name (ptr expr)))))
-      (eval! (expr (defun (delete array (unexpr type)) (void (arr (array (unexpr type))))
-		     (dealloc (cast (member arr data) (ptr void))))))
-      (eval! (expr (overload delete (delete array (unexpr type)))))
+		     (name (ptr expr))))))
+      (eval!! (intern (expr (defun (delete array (unexpr type)) (void (arr (array (unexpr type))))
+		     (dealloc (cast (member arr data) (ptr void)))))))
+      (eval!! (intern (expr (overload delete (delete array (unexpr type))))))
+      (print "Done.." newline)
       )
     (expr (array (unexpr type)))))
 
 ;(array-type i32)
-(print (expand (expr (array-type i32))) newline)
-;(print (expand (expr (array-type i64))) newline)
+;; (print (expand (expr (array-type i32))) newline)
+;; (print (expand (expr (array-type vec2))) newline)
+;; (print (expand (expr (array-type vec3))) newline)
+;; (print (expand (expr (array-type i64))) newline)
 
 ;(exit 0)
 ;(exit 0)
@@ -51,17 +54,19 @@
 
 (defmacro map (array fcn)
   (let ((type :type (ptr expr)))
-    (let ((array-type (type-of array)))
-      (let ((array-name (struct-name array-type)))
-	(setf type (sub-expr.expr array-name 1))))
-    (let ((test (get-var (expr (map2 (unexpr type))))))
-      (when (eq null test)
-	(eval! (expr 
-		(defun (map2 (unexpr type)) 
-		    (void (a (array-type (unexpr type))) (f (ptr (fcn void (v (unexpr type))))))
-		  (range it 0 (member a cnt)
-			 (f (deref (ptr+ (member a data) it)))))))))
-    (expr ((map2 (unexpr type)) (unexpr array) (unexpr fcn)))))
+    (print "This happens!" newline)
+    (progn
+      (let ((array-type (type-of array)))
+	(let ((array-name (struct-name array-type)))
+	  (setf type (sub-expr.expr array-name 1))))
+      (let ((test (get-var (intern (expr (map2 (unexpr type)))))))
+	(when (eq null test)
+	  (eval! (expr 
+		  (defun (map2 (unexpr type)) 
+		      (void (a (array-type (unexpr type))) (f (ptr (fcn void (v (unexpr type))))))
+		    (range it 0 (member a cnt)
+			   (f (deref (ptr+ (member a data) it)))))))))
+	  (expr ((map2 (unexpr type)) (unexpr array) (unexpr fcn))))))
 
 
 (print (expr2type (expr i32)) newline)
