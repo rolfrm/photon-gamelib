@@ -2,8 +2,7 @@
 
 (defun **glfw:load-sym ((ptr expr) (2lisp-name (ptr expr)) (2c-name (ptr expr)) (2type (ptr expr)))
   (progn
-  (print "Defining") (print-expr 2lisp-name) (print newline)
-  (expr (load-symbol+ libglfw (unexpr 2lisp-name) (unexpr 2c-name) (unexpr 2type) ))))
+    (expr (load-symbol+ libglfw (unexpr 2lisp-name) (unexpr 2c-name) (unexpr 2type) ))))
 (declare-macro glfw:load-sym **glfw:load-sym)
 (glfw:load-sym glfw:init glfwInit (fcn void))
 

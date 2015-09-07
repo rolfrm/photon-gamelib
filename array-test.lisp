@@ -22,13 +22,19 @@
   (print s3 newline))
 (print rect-test newline)
 
-
+(defoverloaded delete)
 (defmacro array-type(type)
   (progn
-    (eval! (expr (defstruct (array (unexpr type))
-		   (data (ptr (unexpr type)))
-		   (cnt i64)
-		   (name (ptr expr)))))
+    (when (eq null (get-var (expr (delete (unexpr type)))))
+      
+      (eval! (expr (defstruct (array (unexpr type))
+		     (data (ptr (unexpr type)))
+		     (cnt i64)
+		     (name (ptr expr)))))
+      (eval! (expr (defun (delete array (unexpr type)) (void (arr (array (unexpr type))))
+		     (dealloc (cast (member arr data) (ptr void))))))
+      (eval! (overload delete (delete array (unexpr type))))
+      )
     (expr (array (unexpr type)))))
 
 ;(array-type i32)
