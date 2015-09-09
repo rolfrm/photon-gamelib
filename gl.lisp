@@ -50,6 +50,7 @@
 (gl-load gl:bind-attrib-location glBindAttribLocation
 	 (fcn void (program gl:shader-program) (index i32) (name (ptr char))))
 (gl-load gl:draw-arrays glDrawArrays (fcn void (mode gl:enum) (first u32) (count u32)))
+(gl-load gl:draw-elements glDrawElements (fcn void (mode gl:enum) (size u32) (type gl:enum) (indices (ptr void))))
 
 ;; gl vbo
 (gl-load gl:gen-buffers glGenBuffers (fcn void (count u32) (buffer-ptr (ptr u32))))
@@ -146,6 +147,7 @@
 (glvar gl:shader-source-length 0x8B88)
 (glvar gl:link-status 0x8B82)
 (glvar gl:array-buffer 0x8892)
+(glvar gl:element-array-buffer 0x8893)
 (glvar gl:stream-draw 0x88E0)
 (glvar gl:static-draw 0x88E4)
 (glvar gl:dynamic-draw 0x88E8)

@@ -151,13 +151,17 @@
 
 (defstruct (gl:buffer vec3)
   (vbo u32)
-  (cnt i32))
+  (cnt u32))
+
+(defstruct (gl:buffer i32)
+  (vbo u32)
+  (cnt u32))
 
 (defun (load-vbo vec3) ((gl:buffer vec3) (array (array-type vec3)))
-  (let ((buf :type (gl:buffer vec3)))
-    (setf (member buf vbo) (gl:gen-buffer))
-    (setf (member buf cnt) (cast (member array cnt) i32))
-    (gl:bind-buffer gl:array-buffer (member buf vbo))
+  (let ((buf2 :type (gl:buffer vec3)))
+    (setf (member buf2 vbo) (gl:gen-buffer))
+    (setf (member buf2 cnt) (cast (member array cnt) i32))
+    (gl:bind-buffer gl:array-buffer (member buf2 vbo))
     (let ((size (* (member array cnt) 3 (cast (size-of (type f32)) i64))))
       (let ((data (cast (alloc (cast size u64)) (ptr f32))))
       (range it 0 (member array cnt)
@@ -166,69 +170,47 @@
 	       (setf (deref (+ data i2)) (cast (member v x) f32))
 	       (setf (deref (+ data i2 1)) (cast (member v y) f32))
 	       (setf (deref (+ data i2 2)) (cast (member v z) f32))))
-      
+      (print "Buffered data" newline)
+      (range it 0 (* (member array cnt) 3)
+	     (print (deref (+ data it)) newline))
+      (print "Done" newline)
+      (print "Size: " size newline)
       (gl:buffer-data gl:array-buffer (cast size u32) (cast data (ptr void)) gl:static-draw )
-      (dealloc (cast data (ptr void)))))
+      ;(dealloc (cast data (ptr void)))
+      ))
+    buf2))
+
+(defun (load-index-vbo i32) ((gl:buffer i32) (array (array-type i32)))
+  (let ((buf :type (gl:buffer i32)))
+    (setf (member buf vbo) (gl:gen-buffer))
+    (setf (member buf cnt) (cast (member array cnt) u32))
+    (gl:bind-buffer gl:element-array-buffer (member buf vbo))
+    (gl:buffer-data gl:element-array-buffer (cast (* (member array cnt) 4) u32) 
+		    (cast (member array data) (ptr void)) gl:static-draw )
     buf))
 
-(exit 0)
+(defun (bind-vbo vec3) (void (buf (gl:buffer vec3)) (index u32))
+  (progn
+    (gl:bind-buffer gl:array-buffer (member buf vbo))
+    (gl:vertex-attrib-pointer index 3 gl:float gl:false 0 null)))
 
-;(defmacro generic (&type t body)
-;  (let ((name (sub-expr.expr body 0)))
-;  (let ((gen-name (sub-expr.expr name 0)))
-      
+(defun (bind-index i32) (void (index-buffer (gl:buffer i32)))
+  (progn
+    (gl:bind-buffer gl:element-array-buffer (member index-buffer vbo))))
 
-;generic function
-(generic (map a) (void (seq (array a)) (f (fcn void (item a))))
-  (range it 0 (member seq cnt)
-	 (f (deref (ptr+ seq it)))))
+(defun (render-elements i32) (void (mode gl:enum) (index-buffer (gl:buffer i32)))
+  (progn
+    ((bind-index i32) index-buffer)
+    (gl:draw-elements mode (member index-buffer cnt) gl:uint null)))
 
-((map vec2) (array (vec 0 0) (vec 1 1)) (lambda (void (item vec2)) (print item newline)))
-(defun (setf (ptr i32)) (i32 (p (ptr 32)) (value i32))
-   (setf (deref p) value))
-   
-;(defmacro genfun (args body)
+(defvar vertexes (make-array :vertex (vec 0.2 0 0) (vec 0.1 0 0) (vec 0.5 0.5 0) (vec 0 0.5 0)))
+(defvar indexes (make-array :index (the 0 i32) 1 2 3))
 
-(defun fcn1 (void (a (array-type i32)))
-  (print (member a cnt) newline))
+(defvar vbo1 ((load-vbo vec3) vertexes))
+;(defvar idx1 ((load-index-vbo i32) indexes))
+(delete vertexes)
+(print "Done! " newline)
 
-
-(let ((arr (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2) (vec 3 3) (vec 4 4) (vec 5 6))))
-  (range i 0 (member arr cnt)
-	 (print (deref (+ (cast (member arr data) (ptr vec2)) i)) newline)))
-
-(defvar array-a (array :uvs (vec 0 0) (vec 0.5 0) (vec 0.5 0.5) (vec 0.0 0.5)))
-(defvar array-b (array :vertexes (vec 0 0) (vec 1 1) (vec 2 2)))
-(defvar index-array (array :index 0 1 2 3))
-(defvar simple-array (array :vertexes (cast 1.0 f32) (cast 1.0 f32) (cast 1.0 f32) (cast 1.0 f32)))
-(defvar simple-array2 (array :vertexes 0.0 0.0 1.0 0.0 1.0 1.0 0.0 1.0))
-(defvar simple-array3 (the (array :vertexes 0.0 0.0 1.0 0.0 1.0 1.0 0.0 1.0) (array f64)))
-;(print ">>> " (cast libc i64) " " (cast (load-symbol libc "malloc") i64) newline)
-(exit 0)
-
-(defun compare-arrays (bool (a (array vec2)) (b (array vec2)))
-  (let ((cnt-a (member a cnt)))
-    (and (eq cnt-a (member b cnt))
-	 (and
-	  (eq (member a name) (member b name))
-	  (let ((result true))
-	    (range it 0 cnt-a
-		   (setf result (and result (vec2:eq 
-					     (deref (+ (member a data) it))
-					     (deref (+ (member b data) it))))))
-	    result)))))
-
-(defun (load (array f32)) (u32 (array (array f32)))
-  (let ((out (gl:gen-buffer)))
-    (gl:bind-buffer gl:array-buffer out)
-    (gl:buffer-data gl:array-buffer (cast (* (member array cnt) 4) u32) (cast (member array data) (ptr void)) gl:static-draw)
-    out))
-
-;(defun (load (array f64)
-
-(print "array: " ((load (array f32)) simple-array) newline)
-
-(print "EQ?" (compare-arrays array-a array-b) newline)
 (defvar shader:program (gl:create-program))
 (defvar shader:color :type gl:uniform-loc)
 (let 
@@ -241,18 +223,21 @@ void main(){
 
      (vert-src "
 #version 130
-in vec2 vertex_position;
+in vec3 vertex_position;
 
 void main(){
-  gl_Position = vec4(vertex_position,0.0,1.0);
+  gl_Position = vec4(vertex_position.xy,0.0,1.0);
 }
 ")
+     (glstatus (cast 0 u32))
      (frag (gl:create-shader gl:fragment-shader))
      (vert (gl:create-shader gl:vertex-shader)))
   (let ((frag-src-len (cast (strlen frag-src) u32))
-	(vert-src-len (cast (strlen vert-src) u32)))
+	(vert-src-len (cast (strlen vert-src) u32))
+)
     (gl:shader-source frag 1 (addrof frag-src) (addrof frag-src-len))
     (gl:shader-source vert 1 (addrof vert-src) (addrof vert-src-len)))
+
   (gl:compile-shader frag)
   (gl:compile-shader vert)
   (print "**** Fragment Shader ****" newline)
@@ -261,19 +246,30 @@ void main(){
   (gl-ext:print-shader-errors vert)
   (gl:attach-shader shader:program frag)
   (gl:attach-shader shader:program vert)
+  (gl:bind-attrib-location shader:program 0 "vertex_position")
   (gl:link-program shader:program)
+  
   (setf shader:color 
-	(gl:get-uniform-location shader:program "color")))
+	(gl:get-uniform-location shader:program "color"))
+  (gl:get-program-info shader:program gl:link-status (addrof glstatus))
+  (print "Shader status: " glstatus newline)
+  
+  )
 (gl:use-program shader:program)
-
+(print "SHADER > " (cast shader:program i32) newline)
+(print "GL ERROR: " (gl:get-error) newline)
 (range it 0 1000
        (progn
-	 (usleep 10000)
-	 (gl:clear-color 1 1 1 1)
+	 ;(print (gl:get-error) newline)
+	 (gl:clear-color 0 0 0 1)
 	 (gl:clear gl:color-buffer-bit)
-
+	 (gl:uniform shader:color 0.0 1.0 0.0 1.0);
+	 ((bind-vbo vec3) vbo1 0)
+	 ;((render-elements i32) gl:points idx1)
+	 (gl:draw-arrays gl:points 0 4)
 	 (glfw:swap-buffers win)
-	 (glfw:poll-events)))
+	 (glfw:poll-events)
+	 (usleep 10000)))
 		      
   
   
