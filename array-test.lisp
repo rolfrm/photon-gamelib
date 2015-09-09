@@ -135,7 +135,7 @@
 (setf a2 (push a2 4))
 (setf a2 (push a2 1000))
 (map a2 (lambda (void (a i16)) (print a newline)))
-(exit 0)
+;(exit 0)
 
 ;((m1))
 ;(map vec2)
@@ -148,6 +148,29 @@
 (map (make-array :vex (vec 1 2) (vec 3 4)) f1)
 (map (make-array :vex (vec 1 2) (vec 3 4)) f1)
 (map (make-array :vex2 (vec 1 2 3) (vec 1 2 3)) (lambda (void (v vec3)) (print v newline)))
+
+(defstruct (gl:buffer vec3)
+  (vbo u32)
+  (cnt i32))
+
+(defun (load-vbo vec3) ((gl:buffer vec3) (array (array-type vec3)))
+  (let ((buf :type (gl:buffer vec3)))
+    (setf (member buf vbo) (gl:gen-buffer))
+    (setf (member buf cnt) (cast (member array cnt) i32))
+    (gl:bind-buffer gl:array-buffer (member buf vbo))
+    (let ((size (* (member array cnt) 3 (cast (size-of (type f32)) i64))))
+      (let ((data (cast (alloc (cast size u64)) (ptr f32))))
+      (range it 0 (member array cnt)
+	     (let ((i2 (* it 3))
+		   (v (deref (ptr+ (member array data) it))))
+	       (setf (deref (+ data i2)) (cast (member v x) f32))
+	       (setf (deref (+ data i2 1)) (cast (member v y) f32))
+	       (setf (deref (+ data i2 2)) (cast (member v z) f32))))
+      
+      (gl:buffer-data gl:array-buffer (cast size u32) (cast data (ptr void)) gl:static-draw )
+      (dealloc (cast data (ptr void)))))
+    buf))
+
 (exit 0)
 
 ;(defmacro generic (&type t body)
