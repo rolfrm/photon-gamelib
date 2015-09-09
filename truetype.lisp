@@ -170,7 +170,7 @@
 		   (font-size i32) (max-width i32) (font (ptr tt:fontinfo))
 		   (callback (fcn void (userdata (ptr void)) (status tt:iterate-data)))
 		   (userdata (ptr void))) 
-  (let ((len (cast (strlen text) i64))
+  (let ((len (strlen text))
 	(ascent :type i32)
 	(status :type tt:iterate-data))
     (memset (cast (addrof status) (ptr void)) 0 (size-of (type tt:iterate-data)))

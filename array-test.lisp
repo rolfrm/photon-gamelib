@@ -23,12 +23,11 @@
 (print rect-test newline)
 
 (defoverloaded delete)
+(defoverloaded push)
 (defmacro array-type(type)
   (progn
-    (when (and
-	   (not (check-type-run))
-	   (eq null (get-var (expr (delete array (unexpr type))))))
-      (print "defining data structures for " (expr (array (unexpr type))) newline)
+    (when  (eq null (get-var (expr (delete array (unexpr type)))))
+      (print "Defining data structures for " (expr (array (unexpr type))) newline)
       (eval!! (intern (expr (defstruct (array (unexpr type))
 		     (data (ptr (unexpr type)))
 		     (cnt i64)
@@ -36,8 +35,29 @@
       (eval!! (intern (expr (defun (delete array (unexpr type)) (void (arr (array (unexpr type))))
 		     (dealloc (cast (member arr data) (ptr void)))))))
       (eval!! (intern (expr (overload delete (delete array (unexpr type))))))
-      (print "Done.." newline)
-      )
+      (let ((s (cast 
+		(size-of (expr2type type))
+		i64)))
+	(print s newline)
+	(eval!! (intern (expr 
+			 (defun (push array (unexpr type)) 
+			     ((array (unexpr type)) 
+			      (arr (array (unexpr type)))
+			      (value (unexpr type)))
+			   (progn
+			     (let ((cnt (cast (member arr cnt) i64)))
+			       (let ((newsize (* (+ cnt 1) (unexpr (number2expr s)))))
+			       (setf (member arr data) (cast
+			   				(realloc 
+			   				 (cast (member arr data) (ptr void))
+			   				 (cast newsize u64))
+			   				(ptr (unexpr type))))
+				 
+				 (setf (deref (ptr+ (member arr data) cnt)) value)
+				 (incr (member arr cnt) 1)))
+			     arr)))))
+	(eval!! (intern (expr (overload push (push array (unexpr type))))))
+	))
     (expr (array (unexpr type)))))
 
 ;(array-type i32)
@@ -58,7 +78,6 @@
   (let ((type :type (ptr expr)))
     (progn
       (let ((at (type-of array)))
-	(print "| " at "<<" array newline)
 	(let ((array-name (struct-name at)))
 	  (setf type (sub-expr.expr array-name 1))))
       (let ((test (get-var (intern (expr (map2 (unexpr type)))))))
@@ -77,7 +96,6 @@
   (let ((argcnt (sub-expr.cnt args)))
     (assert (> argcnt 1))
     (unless (eq null (cast t (ptr void))) 
-      (print "alias name: " (alias-name t) newline)
       (setf t (expr2type  (sub-expr.expr (alias-name t) 1)))
       )
     (let ((type (type-of2 t (sub-expr.expr args 1)))
@@ -100,22 +118,23 @@
 					(number2expr 
 					 (cast (* (sub-expr.cnt args) (size-of type)) i64))))
 				      (ptr (unexpr (type2expr type))))))
-		      
 		      (setf (member arr data) data)
 		      (setf (member arr name) (unexpr s))
 		      (setf (member arr cnt) (unexpr (number2expr (cast (- argcnt 1) i64))))
 		      (unexpr endexpr)
 		      arr))))
 	    (dealloc (cast expr-buf (ptr void)))
-	    (print "E:" e newline)
 	    e))))))
 ;(make-array :a1 (vec 1 2) (vec 2 3))
 ;(map (make-array :a1 (vec 1 2) (vec 3 4) (vec 5 6) (vec 7 8)) (lambda (void (a vec2)) (print a newline)))
-(defvar a2 (make-array :a1 (the 1 i8) 2 3))
+(defvar a2 (make-array :a1 (the 1 i16) 2 3))
 (setf a2 (make-array :a1 1 2 3 4 5 6 7))
-(map a2 (lambda (void (a i8)) (print a newline)))
-
-(print (type-of2 (cast null (ptr type_def)) (expr (make-array :a1 (vec 1 2) (vec 3 4)))) newline)
+(map a2 (lambda (void (a i16)) (print a newline)))
+(setf a2 (push (push (push a2 3) 4) 5))
+(setf a2 (push a2 3))
+(setf a2 (push a2 4))
+(setf a2 (push a2 1000))
+(map a2 (lambda (void (a i16)) (print a newline)))
 (exit 0)
 
 ;((m1))
