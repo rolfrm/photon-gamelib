@@ -296,6 +296,9 @@ void main(){
 	 (gl:clear-color 0 0 0 1)
 	 (gl:clear gl:color-buffer-bit)
 	 (gl:uniform shader:color 0.0 1.0 0.0 1.0);
+	 (let ((phase (* (cast it f64) 0.01)))
+	   (gl:uniform shader:color (vec (cos phase) (sin phase) 0.0 1.0))
+	   )
 	 ;((render-elements i32) gl:points idx1)
 	 (gl:draw-arrays gl:line-loop 0 (member vbo1 cnt))
 	 (glfw:swap-buffers win)

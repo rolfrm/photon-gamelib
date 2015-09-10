@@ -442,8 +442,7 @@ length
       (gl:vertex-attrib-pointer 0 2 gl:float gl:false 0 null)
       (gl:uniform offset-loc (vec 0 0))
       (gl:uniform size-loc (vec 1 1))
-      (let ((phase (* (cast it f32) 0.01)))
-	(gl:uniform color-loc (+ 1.0 (sinf phase)) (+ 1.0 (cosf phase)) 0.2 1))
+      (gl:uniform color-loc 0.2 0.4 0.2 1)
       (gl:draw-arrays gl:quads 0 (cast (* 4 grass-rect-cnt) u32))
 
       (gl:bind-buffer gl:array-buffer vbo-circle)
