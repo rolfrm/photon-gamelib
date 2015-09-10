@@ -49,6 +49,7 @@
 (gl-load gl:use-program glUseProgram (fcn void (program gl:shader-program)))
 (gl-load gl:bind-attrib-location glBindAttribLocation
 	 (fcn void (program gl:shader-program) (index i32) (name (ptr char))))
+(gl-load gl:get-attrib-location glGetAttribLocation (fcn i32 (program gl:shader-program) (name (ptr char))))
 (gl-load gl:draw-arrays glDrawArrays (fcn void (mode gl:enum) (first u32) (count u32)))
 (gl-load gl:draw-elements glDrawElements (fcn void (mode gl:enum) (size u32) (type gl:enum) (indices (ptr void))))
 

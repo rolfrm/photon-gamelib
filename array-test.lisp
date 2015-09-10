@@ -153,32 +153,56 @@
   (vbo u32)
   (cnt u32))
 
+(defstruct (gl:buffer vec2)
+  (vbo u32)
+  (cnt u32))
+
 (defstruct (gl:buffer i32)
   (vbo u32)
   (cnt u32))
 
 (defun (load-vbo vec3) ((gl:buffer vec3) (array (array-type vec3)))
   (let ((buf2 :type (gl:buffer vec3)))
-    (setf (member buf2 vbo) (gl:gen-buffer))
-    (setf (member buf2 cnt) (cast (member array cnt) i32))
-    (gl:bind-buffer gl:array-buffer (member buf2 vbo))
+    (setf (member buf2 cnt) (cast (member array cnt) u32))
     (let ((size (* (member array cnt) 3 (cast (size-of (type f32)) i64))))
       (let ((data (cast (alloc (cast size u64)) (ptr f32))))
-      (range it 0 (member array cnt)
-	     (let ((i2 (* it 3))
-		   (v (deref (ptr+ (member array data) it))))
-	       (setf (deref (+ data i2)) (cast (member v x) f32))
-	       (setf (deref (+ data i2 1)) (cast (member v y) f32))
-	       (setf (deref (+ data i2 2)) (cast (member v z) f32))))
-      (print "Buffered data" newline)
-      (range it 0 (* (member array cnt) 3)
-	     (print (deref (+ data it)) newline))
-      (print "Done" newline)
-      (print "Size: " size newline)
-      (gl:buffer-data gl:array-buffer (cast size u32) (cast data (ptr void)) gl:static-draw )
-      ;(dealloc (cast data (ptr void)))
+	(range it 0 (member array cnt)
+	       (let ((i2 (* it 3))
+		     (v (deref (ptr+ (member array data) it))))
+		 (setf (deref (+ data i2)) (cast (member v x) f32))
+		 (setf (deref (+ data i2 1)) (cast (member v y) f32))
+		 (setf (deref (+ data i2 2)) (cast (member v z) f32))))
+	(range it 0 (* (member array cnt) 3)
+	       (print (deref (+ data it)) newline))
+	(setf (member buf2 vbo) (gl:gen-buffer))
+	(gl:bind-buffer gl:array-buffer (member buf2 vbo))
+	(gl:buffer-data gl:array-buffer (cast size u32) (cast data (ptr void)) gl:static-draw )
+	(dealloc (cast data (ptr void)))
       ))
     buf2))
+
+(defun (load-vbo vec2) ((gl:buffer vec2) (array (array-type vec2)))
+  (let ((buf2 :type (gl:buffer vec2)))
+    (setf (member buf2 cnt) (cast (member array cnt) u32))
+    (let ((size (* (member array cnt) 2 (cast (size-of (type f32)) i64))))
+      (let ((data (cast (alloc (cast size u64)) (ptr f32))))
+	(range it 0 (member array cnt)
+	       (let ((i2 (* it 2))
+		     (v (deref (ptr+ (member array data) it))))
+		 (setf (deref (+ data i2)) (cast (member v x) f32))
+		 (setf (deref (+ data i2 1)) (cast (member v y) f32))
+		 
+		 ))
+	(range it 0 (* (member array cnt) 3)
+	       (print (deref (+ data it)) newline))
+
+	(setf (member buf2 vbo) (gl:gen-buffer))
+	(gl:bind-buffer gl:array-buffer (member buf2 vbo))
+	(gl:buffer-data gl:array-buffer (cast size u32) (cast data (ptr void)) gl:static-draw )
+	(dealloc (cast data (ptr void)))
+      ))
+    buf2))
+
 
 (defun (load-index-vbo i32) ((gl:buffer i32) (array (array-type i32)))
   (let ((buf :type (gl:buffer i32)))
@@ -192,7 +216,14 @@
 (defun (bind-vbo vec3) (void (buf (gl:buffer vec3)) (index u32))
   (progn
     (gl:bind-buffer gl:array-buffer (member buf vbo))
-    (gl:vertex-attrib-pointer index 3 gl:float gl:false 0 null)))
+    (gl:vertex-attrib-pointer 0 3 gl:float gl:false 0 null)))
+
+(defun (bind-vbo vec2) (void (buf (gl:buffer vec2)) (index u32))
+  (progn
+    (print "Loading vbo " (member buf vbo) newline)
+    (gl:enable-vertex-attrib-array index)
+    (gl:bind-buffer gl:array-buffer (member buf vbo))
+    (gl:vertex-attrib-pointer 0 2 gl:float gl:false 0 null)))
 
 (defun (bind-index i32) (void (index-buffer (gl:buffer i32)))
   (progn
@@ -202,14 +233,6 @@
   (progn
     ((bind-index i32) index-buffer)
     (gl:draw-elements mode (member index-buffer cnt) gl:uint null)))
-
-(defvar vertexes (make-array :vertex (vec 0.2 0 0) (vec 0.1 0 0) (vec 0.5 0.5 0) (vec 0 0.5 0)))
-(defvar indexes (make-array :index (the 0 i32) 1 2 3))
-
-(defvar vbo1 ((load-vbo vec3) vertexes))
-;(defvar idx1 ((load-index-vbo i32) indexes))
-(delete vertexes)
-(print "Done! " newline)
 
 (defvar shader:program (gl:create-program))
 (defvar shader:color :type gl:uniform-loc)
@@ -223,10 +246,9 @@ void main(){
 
      (vert-src "
 #version 130
-in vec3 vertex_position;
-
+in vec2 vertex_position;
 void main(){
-  gl_Position = vec4(vertex_position.xy,0.0,1.0);
+  gl_Position = vec4(vertex_position,0.0 , 1.0);
 }
 ")
      (glstatus (cast 0 u32))
@@ -239,14 +261,14 @@ void main(){
     (gl:shader-source vert 1 (addrof vert-src) (addrof vert-src-len)))
 
   (gl:compile-shader frag)
-  (gl:compile-shader vert)
   (print "**** Fragment Shader ****" newline)
   (gl-ext:print-shader-errors frag)
+  (gl:compile-shader vert)
   (print "**** Vertex Shader ****" newline)
   (gl-ext:print-shader-errors vert)
   (gl:attach-shader shader:program frag)
   (gl:attach-shader shader:program vert)
-  (gl:bind-attrib-location shader:program 0 "vertex_position")
+  ;(gl:bind-attrib-location shader:program 0 "vertex_position")
   (gl:link-program shader:program)
   
   (setf shader:color 
@@ -258,15 +280,24 @@ void main(){
 (gl:use-program shader:program)
 (print "SHADER > " (cast shader:program i32) newline)
 (print "GL ERROR: " (gl:get-error) newline)
+
+;(defvar vertexes (make-array :vertex (vec 0.1 0.1 0) (vec 0.5 0.1 0) (vec 0.5 0.5 0) (vec 0.1 0.5 0)))
+(defvar vertexes (make-array :vertex (vec 0.0 0.0) (vec 0.5 0.0) (vec 0.5 0.5) (vec 0.0 0.5)))
+(defvar indexes (make-array :index (the 0 i32) 1 2 3))
+
+(defvar vbo1 ((load-vbo vec2) vertexes))
+;(defvar idx1 ((load-index-vbo i32) indexes))
+(delete vertexes)
+
+((bind-vbo vec2) vbo1 0)
 (range it 0 1000
        (progn
 	 ;(print (gl:get-error) newline)
 	 (gl:clear-color 0 0 0 1)
 	 (gl:clear gl:color-buffer-bit)
 	 (gl:uniform shader:color 0.0 1.0 0.0 1.0);
-	 ((bind-vbo vec3) vbo1 0)
 	 ;((render-elements i32) gl:points idx1)
-	 (gl:draw-arrays gl:points 0 4)
+	 (gl:draw-arrays gl:line-loop 0 (member vbo1 cnt))
 	 (glfw:swap-buffers win)
 	 (glfw:poll-events)
 	 (usleep 10000)))
