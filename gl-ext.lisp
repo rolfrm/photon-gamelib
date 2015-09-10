@@ -18,9 +18,6 @@
     (let (( vbo :type u32))
       (gl:gen-buffers 1 (addrof vbo))
       vbo))
-(defstruct (gl:buffer vec3)
-  (vbo u32)
-  (cnt i32))
   
 (defstruct gl-mesh 
   (vbo u32) ; vertex buffer object
