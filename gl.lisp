@@ -25,6 +25,8 @@
 (gl-load gl:enable glEnable (fcn void (glenum gl:enum)))
 (gl-load gl:disable glDisable (fcn void (glenum gl:enum)))
 (gl-load gl:get-error glGetError (fcn u32))
+(gl-load (gl cull-face) glCullFace (fcn void (mode gl:enum)))
+
 ;; gl shader
 (type (alias u32 gl:shader-program))
 (type (alias u32 gl:shader))
@@ -233,4 +235,11 @@
 (glvar gl:quad-strip 8)
 (glvar gl:polygon 9)
 
+(glvar gl:cull-face 0x0B44)
 (glvar gl:depth-test 0x0B71)
+
+(glvar gl:front 0x0404)
+(glvar gl:back 0x0405)
+(glvar gl:front-and-back 0x0408)
+
+

@@ -268,16 +268,23 @@ void main(){
 (print "GL ERROR: " (gl:get-error) newline)
 
 (defvar vertexes (make-array :vertex 
-			     (vec 0.1 0.1 0.5) (vec 0.5 0.1 0.5) (vec 0.5 0.5 0.5) (vec 0.1 0.5 0.5)
-			     (vec 0.1 0.1 3) (vec 0.5 0.1 3) (vec 0.5 0.5 3) (vec 0.1 0.5 3)))
+			     (vec 0.1 0.1 -0.5) (vec 0.5 0.1 -0.5) (vec 0.5 0.5 -0.5) (vec 0.1 0.5 -0.5)
+			     (vec 0.1 0.1 -2) (vec 0.5 0.1 -2) (vec 0.5 0.5 -2) (vec 0.1 0.5 -2)))
 ;(defvar vertexes (make-array :vertex (vec 0.0 0.0) (vec 0.5 0.0) (vec 0.5 0.5) (vec 0.0 0.5)))
-(defvar indexes (make-array :index (the 0 i32) 1 2 3 4 5 6 7))
+(defvar indexes (make-array :index 
+			    (the 0 i32) 1 2 3 
+			    1 0 7 6
+			    0 3 7 6
+			    2 1 5 6
+			    7 6 5 4))
 
 (defvar vbo1 (load-vbo vertexes))
 (defvar idx1 ((load-index-vbo i32) indexes))
 (delete vertexes)
 
 (bind-vbo vbo1 0)
+(gl:enable gl:cull-face)
+((gl cull-face) gl:front)
 (range it 0 1000
        (progn
 	 (gl:clear-color 0 0 0 1)
@@ -287,10 +294,11 @@ void main(){
 	   (gl:uniform shader:color (vec (cos phase) (sin phase) (cos (+ 2.0 phase)) 1.0))
 	   (print phase newline)
 	   (gl:uniform shader:matrix (dot (projection-matrix 1.0 1.0 0.1 5.1 ) 
-					  (translation-matrix (vec (sin phase) (cos phase) phase))))
+					  (translation-matrix 
+					   (vec (sin phase) (cos phase) 0))))
 	   )
 	 
-	 ((render-elements i32) gl:line-loop idx1)
+	 ((render-elements i32) gl:quads idx1)
 	 (glfw:swap-buffers win)
 	 (glfw:poll-events)
 	 (usleep 10000)))
