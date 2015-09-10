@@ -161,6 +161,8 @@
   (vbo u32)
   (cnt u32))
 
+(defoverloaded load-vbo)
+
 (defun (load-vbo vec3) ((gl:buffer vec3) (array (array-type vec3)))
   (let ((buf2 :type (gl:buffer vec3)))
     (setf (member buf2 cnt) (cast (member array cnt) u32))
@@ -203,6 +205,8 @@
       ))
     buf2))
 
+(overload load-vbo (load-vbo vec3))
+(overload load-vbo (load-vbo vec2))
 
 (defun (load-index-vbo i32) ((gl:buffer i32) (array (array-type i32)))
   (let ((buf :type (gl:buffer i32)))
@@ -213,17 +217,22 @@
 		    (cast (member array data) (ptr void)) gl:static-draw )
     buf))
 
+(defoverloaded bind-vbo)
+
 (defun (bind-vbo vec3) (void (buf (gl:buffer vec3)) (index u32))
   (progn
+    (gl:enable-vertex-attrib-array index)
     (gl:bind-buffer gl:array-buffer (member buf vbo))
-    (gl:vertex-attrib-pointer 0 3 gl:float gl:false 0 null)))
+    (gl:vertex-attrib-pointer index 3 gl:float gl:false 0 null)))
 
 (defun (bind-vbo vec2) (void (buf (gl:buffer vec2)) (index u32))
   (progn
-    (print "Loading vbo " (member buf vbo) newline)
     (gl:enable-vertex-attrib-array index)
     (gl:bind-buffer gl:array-buffer (member buf vbo))
-    (gl:vertex-attrib-pointer 0 2 gl:float gl:false 0 null)))
+    (gl:vertex-attrib-pointer index 2 gl:float gl:false 0 null)))
+
+(overload bind-vbo (bind-vbo vec3))
+(overload bind-vbo (bind-vbo vec2))
 
 (defun (bind-index i32) (void (index-buffer (gl:buffer i32)))
   (progn
@@ -234,73 +243,54 @@
     ((bind-index i32) index-buffer)
     (gl:draw-elements mode (member index-buffer cnt) gl:uint null)))
 
-(defvar shader:program (gl:create-program))
-(defvar shader:color :type gl:uniform-loc)
-(let 
-    ((frag-src "
+(defvar shader:program (load-shader
+			"
 uniform vec4 color;
 void main(){
   gl_FragColor = color;
 }
-")
+"
 
-     (vert-src "
-#version 130
-in vec2 vertex_position;
+"
+#version 330
+layout(location=0) in vec3 vertex_position;
+uniform mat4 matrix;
 void main(){
-  gl_Position = vec4(vertex_position,0.0 , 1.0);
+  gl_Position = matrix * vec4(vertex_position, 1.0);
 }
-")
-     (glstatus (cast 0 u32))
-     (frag (gl:create-shader gl:fragment-shader))
-     (vert (gl:create-shader gl:vertex-shader)))
-  (let ((frag-src-len (cast (strlen frag-src) u32))
-	(vert-src-len (cast (strlen vert-src) u32))
-)
-    (gl:shader-source frag 1 (addrof frag-src) (addrof frag-src-len))
-    (gl:shader-source vert 1 (addrof vert-src) (addrof vert-src-len)))
+"))
 
-  (gl:compile-shader frag)
-  (print "**** Fragment Shader ****" newline)
-  (gl-ext:print-shader-errors frag)
-  (gl:compile-shader vert)
-  (print "**** Vertex Shader ****" newline)
-  (gl-ext:print-shader-errors vert)
-  (gl:attach-shader shader:program frag)
-  (gl:attach-shader shader:program vert)
-  ;(gl:bind-attrib-location shader:program 0 "vertex_position")
-  (gl:link-program shader:program)
-  
-  (setf shader:color 
-	(gl:get-uniform-location shader:program "color"))
-  (gl:get-program-info shader:program gl:link-status (addrof glstatus))
-  (print "Shader status: " glstatus newline)
-  
-  )
+(defvar shader:color (gl:get-uniform-location shader:program "color"))
+(defvar shader:matrix (gl:get-uniform-location shader:program "matrix"))
+
 (gl:use-program shader:program)
 (print "SHADER > " (cast shader:program i32) newline)
 (print "GL ERROR: " (gl:get-error) newline)
 
-;(defvar vertexes (make-array :vertex (vec 0.1 0.1 0) (vec 0.5 0.1 0) (vec 0.5 0.5 0) (vec 0.1 0.5 0)))
-(defvar vertexes (make-array :vertex (vec 0.0 0.0) (vec 0.5 0.0) (vec 0.5 0.5) (vec 0.0 0.5)))
-(defvar indexes (make-array :index (the 0 i32) 1 2 3))
+(defvar vertexes (make-array :vertex 
+			     (vec 0.1 0.1 0.5) (vec 0.5 0.1 0.5) (vec 0.5 0.5 0.5) (vec 0.1 0.5 0.5)
+			     (vec 0.1 0.1 3) (vec 0.5 0.1 3) (vec 0.5 0.5 3) (vec 0.1 0.5 3)))
+;(defvar vertexes (make-array :vertex (vec 0.0 0.0) (vec 0.5 0.0) (vec 0.5 0.5) (vec 0.0 0.5)))
+(defvar indexes (make-array :index (the 0 i32) 1 2 3 4 5 6 7))
 
-(defvar vbo1 ((load-vbo vec2) vertexes))
-;(defvar idx1 ((load-index-vbo i32) indexes))
+(defvar vbo1 (load-vbo vertexes))
+(defvar idx1 ((load-index-vbo i32) indexes))
 (delete vertexes)
 
-((bind-vbo vec2) vbo1 0)
+(bind-vbo vbo1 0)
 (range it 0 1000
        (progn
-	 ;(print (gl:get-error) newline)
 	 (gl:clear-color 0 0 0 1)
 	 (gl:clear gl:color-buffer-bit)
 	 (gl:uniform shader:color 0.0 1.0 0.0 1.0);
 	 (let ((phase (* (cast it f64) 0.01)))
-	   (gl:uniform shader:color (vec (cos phase) (sin phase) 0.0 1.0))
+	   (gl:uniform shader:color (vec (cos phase) (sin phase) (cos (+ 2.0 phase)) 1.0))
+	   (print phase newline)
+	   (gl:uniform shader:matrix (dot (projection-matrix 1.0 1.0 0.1 5.1 ) 
+					  (translation-matrix (vec (sin phase) (cos phase) phase))))
 	   )
-	 ;((render-elements i32) gl:points idx1)
-	 (gl:draw-arrays gl:line-loop 0 (member vbo1 cnt))
+	 
+	 ((render-elements i32) gl:line-loop idx1)
 	 (glfw:swap-buffers win)
 	 (glfw:poll-events)
 	 (usleep 10000)))

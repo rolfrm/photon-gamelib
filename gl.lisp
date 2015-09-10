@@ -9,6 +9,8 @@
                               (let ((symb (load-symbol libgl (stringify (unexpr cname)))))
                                  (when (eq symb null)
                                      (setf symb (glfw:get-proc-address (stringify (unexpr cname)))))
+				 (assert (not (eq symb null)))
+				   
                                    symb)))))
 (defmacro gl-load (name cname type)
   (expr (gl:load-symbol (unexpr name) (unexpr cname) (unexpr type))))
@@ -75,6 +77,15 @@
 (gl-load gl:uniform-3f glUniform3f (fcn void (location gl:uniform-loc) (v1 f32) (v2 f32) (v3 f32)));
 (gl-load gl:uniform-4f glUniform4f
 	 (fcn void (location gl:uniform-loc) (v1 f32) (v2 f32) (v3 f32) (v3 f32)));
+
+;void glUniformMatrix4fv( 	GLint location,
+;  	GLsizei count,
+;  	GLboolean transpose,
+;  	const GLfloat *value);
+
+(gl-load gl:uniform-mat4-fv glUniformMatrix4fv 
+	 (fcn void (location gl:uniform-loc) (count u64) (transpose bool) (value (ptr f32))))
+
 
 (gl-load gl:uniform-1i glUniform1i (fcn void (location gl:uniform-loc) (v1 i32)));
 (gl-load gl:uniform-2i glUniform2i (fcn void (location gl:uniform-loc) (v1 i32) (v2 i32)));
