@@ -11,7 +11,7 @@
 (load "mesh.lisp")
 (load "glfw.lisp")
 (glfw:init)
-(defvar win (glfw:create-window 400 400 "Flowery!" null null))
+(defvar win (glfw:create-window 800 800 "Flowery!" null null))
 (glfw:make-current win)
 (load "gl.lisp")
 (load "gl-ext.lisp")
@@ -60,14 +60,6 @@
 	))
     (expr (array (unexpr type)))))
 
-;(array-type i32)
-;; (print (expand (expr (array-type i32))) newline)
-;; (print (expand (expr (array-type vec2))) newline)
-;; (print (expand (expr (array-type vec3))) newline)
-;; (print (expand (expr (array-type i64))) newline)
-
-;(exit 0)
-;(exit 0)
 (defun tst (void (a (array-type i32)))
   (print (member a cnt)))
 
@@ -90,7 +82,6 @@
 	  (expr ((map2 (unexpr type)) (unexpr array) (unexpr fcn))))))
 
 
-(print (expr2type (expr i32)) newline)
 (defvar exprtype (type (ptr expr)))
 (defmacro make-array (&type t args)
   (let ((argcnt (sub-expr.cnt args)))
@@ -125,29 +116,6 @@
 		      arr))))
 	    (dealloc (cast expr-buf (ptr void)))
 	    e))))))
-;(make-array :a1 (vec 1 2) (vec 2 3))
-;(map (make-array :a1 (vec 1 2) (vec 3 4) (vec 5 6) (vec 7 8)) (lambda (void (a vec2)) (print a newline)))
-(defvar a2 (make-array :a1 (the 1 i16) 2 3))
-(setf a2 (make-array :a1 1 2 3 4 5 6 7))
-(map a2 (lambda (void (a i16)) (print a newline)))
-(setf a2 (push (push (push a2 3) 4) 5))
-(setf a2 (push a2 3))
-(setf a2 (push a2 4))
-(setf a2 (push a2 1000))
-(map a2 (lambda (void (a i16)) (print a newline)))
-;(exit 0)
-
-;((m1))
-;(map vec2)
-(defvar f1 (lambda (void (v vec2)) (print v newline)))
-;(f1 (vec 1 2))
-;(defvar a3 (make-array :asd (vec 1 2) (vec 3 4)))
-(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
-(map (make-array :vex (vec 1 2) (vec 3 4)) (lambda (void (v vec2)) (print (+ v (vec 3.1 4.1)) newline)))
-(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
-(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
-(map (make-array :vex (vec 1 2) (vec 3 4)) f1)
-(map (make-array :vex2 (vec 1 2 3) (vec 1 2 3)) (lambda (void (v vec3)) (print v newline)))
 
 (defstruct (gl:buffer vec3)
   (vbo u32)
@@ -174,8 +142,6 @@
 		 (setf (deref (+ data i2)) (cast (member v x) f32))
 		 (setf (deref (+ data i2 1)) (cast (member v y) f32))
 		 (setf (deref (+ data i2 2)) (cast (member v z) f32))))
-	(range it 0 (* (member array cnt) 3)
-	       (print (deref (+ data it)) newline))
 	(setf (member buf2 vbo) (gl:gen-buffer))
 	(gl:bind-buffer gl:array-buffer (member buf2 vbo))
 	(gl:buffer-data gl:array-buffer (cast size u32) (cast data (ptr void)) gl:static-draw )
@@ -195,9 +161,6 @@
 		 (setf (deref (+ data i2 1)) (cast (member v y) f32))
 		 
 		 ))
-	(range it 0 (* (member array cnt) 3)
-	       (print (deref (+ data it)) newline))
-
 	(setf (member buf2 vbo) (gl:gen-buffer))
 	(gl:bind-buffer gl:array-buffer (member buf2 vbo))
 	(gl:buffer-data gl:array-buffer (cast size u32) (cast data (ptr void)) gl:static-draw )
@@ -235,8 +198,7 @@
 (overload bind-vbo (bind-vbo vec2))
 
 (defun (bind-index i32) (void (index-buffer (gl:buffer i32)))
-  (progn
-    (gl:bind-buffer gl:element-array-buffer (member index-buffer vbo))))
+  (gl:bind-buffer gl:element-array-buffer (member index-buffer vbo)))
 
 (defun (render-elements i32) (void (mode gl:enum) (index-buffer (gl:buffer i32)))
   (progn
@@ -268,15 +230,10 @@ void main(){
 (print "GL ERROR: " (gl:get-error) newline)
 
 (defvar vertexes (make-array :vertex 
-			     (vec 0.1 0.1 -0.5) (vec 0.5 0.1 -0.5) (vec 0.5 0.5 -0.5) (vec 0.1 0.5 -0.5)
-			     (vec 0.1 0.1 -2) (vec 0.5 0.1 -2) (vec 0.5 0.5 -2) (vec 0.1 0.5 -2)))
+			     (vec 0 0 -0.5) (vec 0 2 -0.5) (vec 2 0 -0.5) (vec 2 2 -0.5)
+			     (vec 0 0 -2) (vec 2 0 -2) (vec 2 2 -2) (vec 0 2 -2)))
 ;(defvar vertexes (make-array :vertex (vec 0.0 0.0) (vec 0.5 0.0) (vec 0.5 0.5) (vec 0.0 0.5)))
-(defvar indexes (make-array :index 
-			    (the 0 i32) 1 2 3 
-			    1 0 7 6
-			    0 3 7 6
-			    2 1 5 6
-			    7 6 5 4))
+(defvar indexes (make-array :index (the 0 i32) 3));1 2 3 4 5 6 7))
 
 (defvar vbo1 (load-vbo vertexes))
 (defvar idx1 ((load-index-vbo i32) indexes))
@@ -285,20 +242,37 @@ void main(){
 (bind-vbo vbo1 0)
 (gl:enable gl:cull-face)
 ((gl cull-face) gl:front)
-(range it 0 1000
+
+(defvar g:up (vec 0 1 0))
+(defvar g:right (vec 1 0 0))
+(defvar g:depth (vec 0 0 1))
+(gl:clear-color 0 0 0 1)
+(gl:clear gl:color-buffer-bit)
+(range it 0 10000
        (progn
-	 (gl:clear-color 0 0 0 1)
-	 (gl:clear gl:color-buffer-bit)
+
 	 (gl:uniform shader:color 0.0 1.0 0.0 1.0);
-	 (let ((phase (* (cast it f64) 0.01)))
+	 (let ((phase (* (cast it f64) 0.002)))
 	   (gl:uniform shader:color (vec (cos phase) (sin phase) (cos (+ 2.0 phase)) 1.0))
-	   (print phase newline)
-	   (gl:uniform shader:matrix (dot (projection-matrix 1.0 1.0 0.1 5.1 ) 
-					  (translation-matrix 
-					   (vec (sin phase) (cos phase) 0))))
+					;(print phase newline)
+	   (gl:uniform shader:matrix (dot 
+				      (projection-matrix 2.0 2.0 1.0 20.1 ) 
+				      (dot
+				       (translation-matrix 
+					(vec 0 0 -6))
+				       (dot 
+					(mat4-rot-x (* 2.0 phase))
+					(dot
+					 (mat4-rot-z (* 2.0 phase))
+					 (mat4-rot-y (* 2.0 phase))
+					 )
+					)
+				       )
+				      
+				      ))
 	   )
 	 
-	 ((render-elements i32) gl:quads idx1)
+	 ((render-elements i32) gl:points idx1)
 	 (glfw:swap-buffers win)
 	 (glfw:poll-events)
 	 (usleep 10000)))
