@@ -94,7 +94,7 @@
 	  gl:shader-error)
 	gl:no-error)))
 
-(defun load-shader (gl:shader-program (frag-src (ptr char)) (vert-src (ptr char)))
+(defun load-shader (gl:shader-program (frag-src (ptr char)) (vert-src (ptr char)) (attributes (ptr (ptr char))))
   (let ((prog (gl:create-program))
 	(frag (gl:create-shader gl:fragment-shader))
 	(vert (gl:create-shader gl:vertex-shader))
@@ -111,6 +111,14 @@
     (assert (eq (gl-ext:print-shader-errors vert) gl:no-error))
     (gl:attach-shader prog frag)
     (gl:attach-shader prog vert)
+    (when (not (eq (cast attributes (ptr void)) null))
+      (let ((it (cast 0 i32)))
+	(while! (not (eq (cast null (ptr char)) (deref attributes)))
+		(progn
+		  ;(print it " " (deref attributes) newline)
+		  (gl:bind-attrib-location prog it (deref attributes))
+		  (incr attributes 1)
+		  (incr it 1)))))
     (gl:link-program prog)    
     (let ((glstatus :type u32))
       (gl:get-program-info prog gl:link-status (addrof glstatus))

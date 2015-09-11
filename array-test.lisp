@@ -243,6 +243,11 @@
     ((bind-index i32) index-buffer)
     (gl:draw-elements mode (member index-buffer cnt) gl:uint null)))
 
+(defvar attrs (cast (alloc0 (* 8 4)) (ptr (ptr char))))
+(setf (deref attrs) "vertex_position")
+(setf (deref (+ attrs 1)) "colors")
+(setf (deref (+ attrs 2)) "colors2")
+
 (defvar shader:program (load-shader
 			"
 uniform vec4 color;
@@ -252,13 +257,13 @@ void main(){
 "
 
 "
-#version 330
-layout(location=0) in vec3 vertex_position;
+#version 130
+in vec3 vertex_position;
 uniform mat4 matrix;
 void main(){
   gl_Position = matrix * vec4(vertex_position, 1.0);
 }
-"))
+" attrs))
 
 (defvar shader:color (gl:get-uniform-location shader:program "color"))
 (defvar shader:matrix (gl:get-uniform-location shader:program "matrix"))
@@ -284,7 +289,7 @@ void main(){
 
 (bind-vbo vbo1 0)
 (gl:enable gl:cull-face)
-((gl cull-face) gl:front)
+((gl cull-face) gl:back)
 (range it 0 1000
        (progn
 	 (gl:clear-color 0 0 0 1)
@@ -292,7 +297,7 @@ void main(){
 	 (gl:uniform shader:color 0.0 1.0 0.0 1.0);
 	 (let ((phase (* (cast it f64) 0.01)))
 	   (gl:uniform shader:color (vec (cos phase) (sin phase) (cos (+ 2.0 phase)) 1.0))
-	   (print phase newline)
+	   ;(print phase newline)
 	   (gl:uniform shader:matrix (dot (projection-matrix 1.0 1.0 0.1 5.1 ) 
 					  (translation-matrix 
 					   (vec (sin phase) (cos phase) 0))))
