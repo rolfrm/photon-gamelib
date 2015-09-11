@@ -233,7 +233,7 @@ void main(){
 			     (vec 0 0 -0.5) (vec 0 2 -0.5) (vec 2 0 -0.5) (vec 2 2 -0.5)
 			     (vec 0 0 -2) (vec 2 0 -2) (vec 2 2 -2) (vec 0 2 -2)))
 ;(defvar vertexes (make-array :vertex (vec 0.0 0.0) (vec 0.5 0.0) (vec 0.5 0.5) (vec 0.0 0.5)))
-(defvar indexes (make-array :index (the 0 i32) 3));1 2 3 4 5 6 7))
+(defvar indexes (make-array :index (the 0 i32) 1 2 3 4 5 6 7))
 
 (defvar vbo1 (load-vbo vertexes))
 (defvar idx1 ((load-index-vbo i32) indexes))
@@ -246,30 +246,24 @@ void main(){
 (defvar g:up (vec 0 1 0))
 (defvar g:right (vec 1 0 0))
 (defvar g:depth (vec 0 0 1))
-(gl:clear-color 0 0 0 1)
-(gl:clear gl:color-buffer-bit)
+
 (range it 0 10000
        (progn
-
+	 (gl:clear-color 0 0 0 1)
+	 (gl:clear gl:color-buffer-bit)
 	 (gl:uniform shader:color 0.0 1.0 0.0 1.0);
 	 (let ((phase (* (cast it f64) 0.002)))
 	   (gl:uniform shader:color (vec (cos phase) (sin phase) (cos (+ 2.0 phase)) 1.0))
-					;(print phase newline)
-	   (gl:uniform shader:matrix (dot 
+	   (gl:uniform shader:matrix (. 
 				      (projection-matrix 2.0 2.0 1.0 20.1 ) 
-				      (dot
-				       (translation-matrix 
-					(vec 0 0 -6))
-				       (dot 
+				      (.
+				       (translation-matrix (vec 0 0 -6))
+				       (. 
 					(mat4-rot-x (* 2.0 phase))
-					(dot
+					(.
 					 (mat4-rot-z (* 2.0 phase))
 					 (mat4-rot-y (* 2.0 phase))
-					 )
-					)
-				       )
-				      
-				      ))
+					 )))))
 	   )
 	 
 	 ((render-elements i32) gl:points idx1)
