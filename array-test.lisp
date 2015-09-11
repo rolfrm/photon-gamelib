@@ -205,6 +205,11 @@
     ((bind-index i32) index-buffer)
     (gl:draw-elements mode (member index-buffer cnt) gl:uint null)))
 
+(defvar attrs (cast (alloc0 (* 8 4)) (ptr (ptr char))))
+(setf (deref attrs) "vertex_position")
+(setf (deref (+ attrs 1)) "colors")
+(setf (deref (+ attrs 2)) "colors2")
+
 (defvar shader:program (load-shader
 			"
 uniform vec4 color;
@@ -214,13 +219,13 @@ void main(){
 "
 
 "
-#version 330
-layout(location=0) in vec3 vertex_position;
+#version 130
+in vec3 vertex_position;
 uniform mat4 matrix;
 void main(){
   gl_Position = matrix * vec4(vertex_position, 1.0);
 }
-"))
+" attrs))
 
 (defvar shader:color (gl:get-uniform-location shader:program "color"))
 (defvar shader:matrix (gl:get-uniform-location shader:program "matrix"))
