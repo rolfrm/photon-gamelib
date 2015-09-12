@@ -1,0 +1,115 @@
+(defoverloaded delete)
+(defoverloaded push)
+(defoverloaded clear)
+(defoverloaded get)
+(defoverloaded size)
+(defmacro array-type(type)
+  (progn
+    (when  (eq null (get-var (expr (delete array (unexpr type)))))
+      (print "Defining data structures for " (expr (array (unexpr type))) newline)
+      (eval!! (intern (expr (defstruct (array (unexpr type))
+		     (data (ptr (unexpr type)))
+		     (cnt i64)
+		     (name (ptr expr))))))
+      (eval!! (intern (expr (defun (delete array (unexpr type)) (void (arr (array (unexpr type))))
+		     (dealloc (cast (member arr data) (ptr void)))))))
+      (eval!! (intern (expr (defvar (default array (unexpr type)) :type (array (unexpr type))))))
+      (eval!! (intern (expr (zeroize (default array (unexpr type))))))
+      (eval!! (intern (expr (overload delete (delete array (unexpr type))))))
+      (let ((s (number2expr (cast 
+		(size-of (expr2type type))
+		i64))))
+	(eval!! (intern (expr 
+			 (defun (push array (unexpr type)) 
+			     ((array (unexpr type)) 
+			      (arr (array (unexpr type)))
+			      (value (unexpr type)))
+			   (progn
+			     (let ((cnt (cast (member arr cnt) i64)))
+			       (let ((newsize (* (+ cnt 1) (unexpr s))))
+			       (setf (member arr data) (cast
+			   				(realloc 
+			   				 (cast (member arr data) (ptr void))
+			   				 (cast newsize u64))
+			   				(ptr (unexpr type))))
+				 
+				 (setf (deref (ptr+ (member arr data) cnt)) value)
+				 (incr (member arr cnt) 1)))
+			     arr)))))
+	(eval!! (intern (expr (overload push (push array (unexpr type))))))
+	(eval!! (intern (expr
+			 (defun (clear array (unexpr type))
+			     ((array (unexpr type)) (arr (array (unexpr type))))
+			   (progn
+			     (dealloc (cast (member arr data) (ptr void)))
+			     (setf (member arr data) (cast null (ptr (unexpr type))))
+			     (setf (member arr cnt) 0)
+			     arr)))))
+	(eval!! (intern (expr (overload clear (clear array (unexpr type))))))
+	(eval!! (intern (expr (defun (get array (unexpr type))
+				  ((unexpr type) (arr (array (unexpr type))) (idx i64))
+				(deref (+ (member arr data) idx))))))
+	(eval!! (intern (expr (overload get (get array (unexpr type))))))
+	(eval!! (intern (expr (defun (bytesize array (unexpr type)) (i64 (arr (array (unexpr type))))
+				(* (member arr cnt) (unexpr s))))))
+	(eval!! (intern (expr (overload size (bytesize array (unexpr type))))))
+				 
+	))
+    (expr (array (unexpr type)))))
+
+(defun tst (void (a (array-type i32)))
+  (print (member a cnt)))
+
+(defun struct-name ((ptr expr) (struct-type (ptr type_def)))
+  (alias-name struct-type))
+
+(defmacro map (array fcn)
+  (let ((type :type (ptr expr)))
+    (progn
+      (let ((at (type-of array)))
+	(let ((array-name (struct-name at)))
+	  (setf type (sub-expr.expr array-name 1))))
+      (let ((test (get-var (intern (expr (map2 (unexpr type)))))))
+	(when (eq null test)
+	  (eval! (expr 
+		  (defun (map2 (unexpr type)) 
+		      (void (a (array-type (unexpr type))) (f (ptr (fcn void (v (unexpr type))))))
+		    (range it 0 (member a cnt)
+			   (f (deref (ptr+ (member a data) it)))))))))
+	  (expr ((map2 (unexpr type)) (unexpr array) (unexpr fcn))))))
+
+
+(defvar exprtype (type (ptr expr)))
+(defmacro make-array (&type t args)
+  (let ((argcnt (sub-expr.cnt args)))
+    (assert (> argcnt 1))
+    (unless (eq null (cast t (ptr void))) 
+      (setf t (expr2type  (sub-expr.expr (alias-name t) 1)))
+      )
+    (let ((type (type-of2 t (sub-expr.expr args 1)))
+	  (expr-buf (cast (alloc0 (* argcnt (size-of (type (ptr expr)))))
+			  (ptr (ptr expr)))))
+      (setf (deref expr-buf) (expr progn))
+      (range it 1 (cast argcnt i64)
+	     (setf (deref (+ expr-buf it))
+		   (expr
+		    (setf (deref (+ data (unexpr (number2expr (- it 1)))))
+			  (unexpr (sub-expr.expr args (cast it u64)))))))
+      (let ((n (intern (sub-expr.expr args 0))))
+	(let ((endexpr (make-sub-expr expr-buf (cast argcnt u64)))
+	      (s (intern (expr (nameof (unexpr n))))))
+	  (def s exprtype (cast n (ptr void)))
+	  (let ((e (expr 
+		    (let ((arr :type (array-type (unexpr (type2expr type))))
+			  (data (cast (alloc 
+				       (unexpr 
+					(number2expr 
+					 (cast (* (sub-expr.cnt args) (size-of type)) i64))))
+				      (ptr (unexpr (type2expr type))))))
+		      (setf (member arr data) data)
+		      (setf (member arr name) (unexpr s))
+		      (setf (member arr cnt) (unexpr (number2expr (cast (- argcnt 1) i64))))
+		      (unexpr endexpr)
+		      arr))))
+	    (dealloc (cast expr-buf (ptr void)))
+	    e))))))
