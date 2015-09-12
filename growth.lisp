@@ -1,13 +1,16 @@
 (load "../Photon/std2.lisp")
 (load "truetype.lisp")
+(load "array.lisp")
+(type (array-type vec2))
+(type (array-type vec3))
 
 (defstruct rect
   (upper-left vec2)
   (size vec2))
 
 (defvar rect-default :type rect)
+(zeroize rect-default)
 
-(memset (cast (addrof rect-default) (ptr void)) 0 (size-of (type rect)))
 (load "mesh.lisp")
 (load "glfw.lisp")
 (glfw:init)
@@ -20,19 +23,14 @@
 (defvar font (load-font "/usr/share/fonts/truetype/freefont/FreeMono.ttf"))
 
 (text-box:load)
- 
-(defvar prog (gl:create-program))
-(defvar frag (gl:create-shader gl:fragment-shader))
-(defvar vert (gl:create-shader gl:vertex-shader))
-
-(defvar frag-src "
+(defvar attris (make-array :attributes "vertex_position" (cast null (ptr char))))
+(defvar prog (load-shader "
 uniform vec4 color;
 void main(){
   gl_FragColor = color;
 }
-")
-
-(defvar vert-src "
+"
+"
 #version 130
 in vec2 vertex_position;
 uniform vec2 offset;
@@ -48,41 +46,10 @@ void main(){
 
   gl_Position = vec4((v * size + offset - cam) / cam_size * 2.0,0.0,1.0);
 }
-")
+" (member attris data)))
 
-(defvar frag-src-len (cast (strlen frag-src) u32))
-(defvar vert-src-len (cast (strlen vert-src) u32))
-(gl:shader-source frag 1 (addrof frag-src) (addrof frag-src-len))
-(gl:compile-shader frag)
-(defvar glstatus (cast 0 u32))
-(gl:get-shader-info frag gl:compile-status (addrof glstatus))
-(if (eq glstatus gl:true)
-      (print "success!")
-      (print "fail!"))
-(print newline)
-(gl:shader-source vert 1 (addrof vert-src) (addrof vert-src-len))
-(gl:compile-shader vert)
-(gl:get-shader-info vert gl:compile-status (addrof glstatus))
-(if (eq glstatus gl:true)
-      (write-line "success!")
-      (write-line "fail!"))
-(print newline)
-(defvar buffer (cast (alloc 1000) (ptr char)))
-(defvar length (cast 0 u32))
-(gl:get-shader-info-log vert 1000 (addrof length) buffer)
-length
-(write-line "--- INFO LOG ---")
-(write-line buffer)
-(write-line "----------------")
-(gl:attach-shader prog frag)
-(gl:attach-shader prog vert)
-(gl:bind-attrib-location prog 0 "vertex_position")
-(gl:link-program prog)
-(gl:delete-shader frag)
-(gl:delete-shader vert)
-(gl:get-program-info prog gl:link-status (addrof glstatus))
-(print "Shader status: " glstatus newline)
 (gl:use-program prog)
+
 
 (defvar offset-loc (gl:get-uniform-location prog "offset"))
 (defvar size-loc (gl:get-uniform-location prog "size"))
@@ -90,42 +57,19 @@ length
 (defvar cam-loc (gl:get-uniform-location prog "cam"))
 (defvar cam-size-loc (gl:get-uniform-location prog "cam_size"))
 (defvar dir-loc (gl:get-uniform-location prog "dir"))
-(defvar points (cast null (ptr vec2)))
-(defvar points-cnt  0)
+(defvar points (default array vec2))
 
-(defvar vbo (cast 0 u32))
-(gl:gen-buffers 1 (addrof vbo))
-(gl:bind-buffer gl:array-buffer vbo)
-
-(defun load-points(void)
-  (let ((buf (cast (alloc (* 2 (size-of (type f32)) (cast points-cnt u64))) (ptr f32))))
-    (gl:bind-buffer gl:array-buffer vbo)
-    (range it 0 points-cnt
-	   (let ((point (deref (+ points it))))
-	     (setf (deref (+ buf (* it 2)) )
-		   (cast (member point x) f32))
-	     (setf (deref (+ buf (+ 1 (* it 2))))
-		   (cast (member point y) f32))))
-    (gl:buffer-data gl:array-buffer (cast (* (cast points-cnt u64) (size-of (type f32)) 2) u32)
-		    (cast buf (ptr void)) gl:static-draw)
-    (dealloc (cast buf (ptr void)))
-    ))
-
-
-(defvar vbo-circle (gl:gen-buffer))
-(gl:bind-buffer gl:array-buffer vbo-circle)
-
-(defvar circ-pts (cast 64 i64))
-(let ((s (* (size-of (type f32)) (cast circ-pts u64) 2)))
-  (let ((buf2 (cast (alloc s) (ptr f32))))
+(defvar vbo :type (gl:buffer vec2))
+(defvar circ-vbo
+  (let ((points2 (default array vec2))
+	(circ-pts 64))
     (range it 0 circ-pts
-	 (let ((phase (* (cast it f32) (/ (cast 2pi f32) (cast circ-pts f32))))
-	       (buf3 (+ buf2 (* it 2))))
-	   (setf (deref buf3) (sin32 phase))
-	   (setf (deref (+ buf3 1)) (cos32 phase))))
+	   (let ((phase (* (cast it f64) (/ 2pi (cast circ-pts f64)))))
+	     (push points2 (vec (sin phase) (cos phase)))))
+    (let ((vout (load-vbo points2)))
+      (clear points2)
+      vout)))
 
-    (gl:buffer-data gl:array-buffer (cast s u32) (cast buf2 (ptr void)) gl:static-draw)
-    (dealloc (cast buf2 (ptr void)))))
 
 (defvar leaf-pts (cast 5 i64))
 (defvar leaf-vbo (gl:gen-buffer))
@@ -269,9 +213,8 @@ length
     (add-to-list+ boosters booster-cnt (vec -11 70 0.5))
     (load-boxes)
     (gl:clear-color 0.8 0.8 1.0  1.0 )
-    (clear-list+ points points-cnt)
-    (add-to-list+ points points-cnt (vec 0 0))
-    (add-to-list+ points points-cnt (vec 0 10.0))
+    (setf points (clear points))
+    (setf points (push (push points (vec 0 0)) (vec 0 10)))
     (load-points)
     ))
 
