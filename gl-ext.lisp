@@ -174,13 +174,19 @@
 	))
     buf2))
 
-;(defun (reload-vbo vec2) ((gl:buffer vec2) (array (array-type vec2)) (vbo (gl:buffer vec2)))
-  
-  
+(defoverloaded reload-vbo)
+(defun (reload-vbo vec2) ((gl:buffer vec2) (vbo (gl:buffer vec2)) (array (array-type vec2)))
+  (let ((data ((vec2 array to vec2f array) array)))
+    (gl:bind-buffer gl:array-buffer (member vbo vbo))
+    (gl:buffer-data gl:array-buffer (cast (size data) u32) (cast (member data data) (ptr void)) gl:static-draw)
+    (setf (member vbo cnt) (cast (member data cnt) u32))
+    (clear data)
+    vbo
+    ))
 
 (overload load-vbo (load-vbo vec3))
 (overload load-vbo (load-vbo vec2))
-
+(overload reload-vbo (reload-vbo vec2))
 (defun (load-index-vbo i32) ((gl:buffer i32) (array (array-type i32)))
   (let ((buf :type (gl:buffer i32)))
     (setf (member buf vbo) (gl:gen-buffer))

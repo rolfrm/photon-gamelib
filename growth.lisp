@@ -60,12 +60,12 @@ void main(){
 (defvar points (default array vec2))
 
 (defvar vbo :type (gl:buffer vec2))
-(defvar circ-vbo
+(defvar vbo-circle
   (let ((points2 (default array vec2))
 	(circ-pts 64))
     (range it 0 circ-pts
 	   (let ((phase (* (cast it f64) (/ 2pi (cast circ-pts f64)))))
-	     (push points2 (vec (sin phase) (cos phase)))))
+	     (setf points2 (push points2 (vec (sin phase) (cos phase))))))
     (let ((vout (load-vbo points2)))
       (clear points2)
       vout)))
@@ -215,9 +215,9 @@ void main(){
     (gl:clear-color 0.8 0.8 1.0  1.0 )
     (setf points (clear points))
     (setf points (push (push points (vec 0 0)) (vec 0 10)))
-    (load-points)
+    (setf vbo (reload-vbo vbo points))
     ))
-
+(setf vbo (load-vbo points))
 (load-game)
 
 (gl:enable gl:blend)
@@ -248,12 +248,10 @@ void main(){
 	  (setf dead-timer 0))
 	(incr dead-timer 1)
 	)
+
       (when alive
-	(let ((lastpt (deref (+ points (- points-cnt 1)))))
-	  (add-to-list+ points points-cnt
-			(+ lastpt
-					;(* (vec (randf) (randf)) speed 1.0)
-			   (* player-dir speed)))
+	(let ((lastpt (get points (- (member points cnt) 1))))
+	  (setf points (push points (+ lastpt (* player-dir speed))))
 	  (let ((turn (if (or (glfw:get-key win glfw:key-a)
 			      (glfw:get-key win glfw:key-left))
 			  0.2
@@ -271,14 +269,14 @@ void main(){
 	    (setf player-dir (vec2turn player-dir (* turn 0.1)))
 
 	    )
-	  (setf cam-pos (deref (+ points (cast (- points-cnt 1) i64))))
+	  (setf cam-pos ((get array vec2) points (- (member points cnt) 1)))
 	  (let ((v (vec2-normalize (vec2:rot90 player-dir))))
 	    (update-leaves cam-pos v)
 	    )
-	  (load-points))
+	  (setf vbo (reload-vbo vbo points))
+	  )
 
-
-	(let ((cheight (deref (+ points (cast (- points-cnt 1) i64)))))
+	(let ((cheight (get points (- (member points cnt) 1))))
 	  (text-box:delete font-t)
 
 	  (let ((file (fopen "tmp-text-buffer" "wb+"))
@@ -310,6 +308,7 @@ void main(){
 	    )
 	  ))
 	)
+
       ;(setf speed (* 0.9995 speed))
       (gl:uniform dir-loc (vec 1 0))
       (gl:clear gl:color-buffer-bit)
@@ -317,8 +316,7 @@ void main(){
       (gl:uniform cam-loc cam-pos)
 
       (gl:uniform color-loc 0.0 0.0 0.0 1.0)
-      (gl:bind-buffer gl:array-buffer vbo-circle)
-      (gl:vertex-attrib-pointer 0 2 gl:float gl:false 0 null)
+      (bind-vbo vbo-circle 0)
       (range it 0 (cast circle-cnt i64)
 	     (let ((circle (deref (+ circles it))))
 	       (let ((dist (pt-dist cam-pos (vec (member circle x) (member circle y)))))
@@ -326,7 +324,7 @@ void main(){
 		   (setf speed (* 0.997 speed))))
 	       (gl:uniform offset-loc (vec (member circle x) (member circle y)))
 	       (gl:uniform size-loc (vec (member circle z) (member circle z)))
-	       (gl:draw-arrays gl:polygon 0 (cast circ-pts u32))))
+	       (gl:draw-arrays gl:polygon 0 (member vbo-circle cnt))))
       (gl:uniform color-loc 1.0 1.0 0.0 1.0)
 
       (range it 0 (cast booster-cnt i64)
@@ -339,7 +337,7 @@ void main(){
 		   ))
 	       (gl:uniform offset-loc (vec (member circle x) (member circle y)))
 	       (gl:uniform size-loc (vec (member circle z) (member circle z)))
-	       (gl:draw-arrays gl:polygon 0 (cast circ-pts u32))
+	       (gl:draw-arrays gl:polygon 0 (member vbo-circle cnt))
 
 	       ))
 
@@ -354,20 +352,20 @@ void main(){
       (when alive
 	(range it 0 grass-rect-cnt
 	       (let ((r (deref (+ grass-rects it))))
-		 (when (pt-rect-collision r (deref (+ points (cast (- points-cnt 1) i64))))
+		 (when (pt-rect-collision r (get points (- (member points cnt) 1)))
 		   (gl:clear-color 1.0 0.0 0.0 0.0)
 		   (setf alive false)
 		   )))
 
 	)
 
-      (gl:bind-buffer gl:array-buffer vbo)
-      (gl:vertex-attrib-pointer 0 2 gl:float gl:false 0 null)
+      (bind-vbo vbo 0)
       (gl:uniform offset-loc (vec 0.0 0.0))
       (gl:uniform size-loc (vec 1 1))
       (gl:uniform color-loc 0.5 0.8 0.3 1)
-      (gl:draw-arrays gl:line-strip 0 (cast points-cnt u32))
+      (gl:draw-arrays gl:points 0 (member vbo cnt))
 
+      
 
       (gl:bind-buffer gl:array-buffer leaf-vbo)
       (gl:vertex-attrib-pointer 0 2 gl:float gl:false 0 null)
@@ -388,23 +386,20 @@ void main(){
       (gl:uniform color-loc 0.2 0.4 0.2 1)
       (gl:draw-arrays gl:quads 0 (cast (* 4 grass-rect-cnt) u32))
 
-      (gl:bind-buffer gl:array-buffer vbo-circle)
-      (gl:vertex-attrib-pointer 0 2 gl:float gl:false 0 null)
-
+      (bind-vbo vbo-circle 0)
       (range it 0 5
       	     (let ((phase (* (cast it f64) (/ 1.0 5.0) pi 2.0)))
       	       (let ((offset (vec (cos phase) (sin phase))))
-
 		 (gl:uniform offset-loc (+ cam-pos (* offset 0.5)))
 		 (gl:uniform color-loc 1.0 1.0 0.0 1)
 		 (gl:uniform size-loc 0.25 0.25)
-		 (gl:draw-arrays gl:polygon 0 (cast circ-pts u32))
-      		  )))
+		 (gl:draw-arrays gl:polygon 0 (member vbo-circle cnt))
+		 )))
 
       (gl:uniform offset-loc cam-pos)
       (gl:uniform color-loc 1.0 1.0 1.0 1.0)
       (gl:uniform size-loc 0.3 0.3)
-      (gl:draw-arrays gl:polygon 0 (cast circ-pts u32))
+      (gl:draw-arrays gl:polygon 0 (member vbo-circle cnt))
 
       (gl:uniform offset-loc (vec 0.0 0.0))
 
